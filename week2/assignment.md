@@ -40,11 +40,11 @@ As you work through the assignment, use `writeup.md` to document your progress. 
 
 Analyze the existing `extract_action_items()` function in `week2/app/services/extract.py`, which currently extracts action items using predefined heuristics.
 
-Your task is to implement an **LLM-powered** alternative, `extract_action_items_llm()`, that utilizes Ollama to perform action item extraction via a large language model.
+Your task is to implement an **LLM-powered** alternative, `extract_action_items_llm()`, that utilizes the Gemini API (via the shared `gemini_client.chat()` helper at the project root, also used in week1) to perform action item extraction via a large language model.
 
 Some  tips:
-- To produce structured outputs (i.e. JSON array of strings), refer to this documentation: https://ollama.com/blog/structured-outputs 
-- To browse available Ollama models, refer to this documentation: https://ollama.com/library. Note that larger models will be more resource-intensive, so start small. To pull and run a model: `ollama run {MODEL_NAME}`
+- To produce structured outputs (i.e. JSON array of strings), refer to this documentation: https://ai.google.dev/gemini-api/docs/structured-output
+- To browse available Gemini models, refer to this documentation: https://ai.google.dev/gemini-api/docs/models. Note that larger/"pro" models will be more expensive and slower, so start with a "flash" model.
 
 ### TODO 2: Add Unit Tests 
 

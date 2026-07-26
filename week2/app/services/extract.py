@@ -5,7 +5,7 @@ import re
 from typing import List
 import json
 from typing import Any
-from ollama import chat
+from gemini_client import chat
 from dotenv import load_dotenv
 
 load_dotenv()

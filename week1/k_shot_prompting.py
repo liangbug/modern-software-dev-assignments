@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from ollama import chat
+from gemini_client import chat
 
 load_dotenv()
 
@@ -26,7 +26,7 @@ def test_your_prompt(system_prompt: str) -> bool:
     for idx in range(NUM_RUNS_TIMES):
         print(f"Running test {idx + 1} of {NUM_RUNS_TIMES}")
         response = chat(
-            model="mistral-nemo:12b",
+            model="gemini-3.6-flash",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": USER_PROMPT},
