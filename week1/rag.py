@@ -37,7 +37,10 @@ QUESTION = (
 
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """
+You are a senior Python engineer who writes small, correct integration functions
+against HTTP APIs.
+"""
 
 
 # For this simple example
@@ -56,7 +59,7 @@ def YOUR_CONTEXT_PROVIDER(corpus: List[str]) -> List[str]:
 
     For example, return [] to simulate missing context, or [corpus[0]] to include the API docs.
     """
-    return []
+    return [corpus[0]] if corpus else []
 
 
 def make_user_prompt(question: str, context_docs: List[str]) -> str:
@@ -97,7 +100,7 @@ def test_your_prompt(system_prompt: str, context_provider: Callable[[List[str]],
     for idx in range(NUM_RUNS_TIMES):
         print(f"Running test {idx + 1} of {NUM_RUNS_TIMES}")
         response = chat(
-            model="gemini-3.6-flash",
+            model="gemini-3.5-flash",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},

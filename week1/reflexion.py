@@ -15,7 +15,18 @@ Keep the implementation minimal.
 """
 
 # TODO: Fill this in!
-YOUR_REFLEXION_PROMPT = ""
+YOUR_REFLEXION_PROMPT = """
+角色:
+你是一位資深 Python 工程師,專門負責除錯與修正程式碼。
+
+任務:
+使用者會提供先前產生的 Python 函式程式碼,以及該函式在測試案例中失敗的詳細資訊
+(包含輸入、預期結果、實際結果,以及具體違反了哪些檢查規則)。請:
+1. 仔細分析每一筆失敗案例,找出程式碼邏輯中對應的缺陷。
+2. 修正程式碼,確保所有測試案例都能通過,同時不要破壞原本已經正確的邏輯。
+3. 只輸出一個 fenced Python code block,定義修正後的 is_valid_password(password: str) -> bool
+   函式,不要有任何多餘的說明文字或註解。
+"""
 
 
 # Ground-truth test suite used to evaluate generated code
@@ -96,7 +107,14 @@ def your_build_reflexion_context(prev_code: str, failures: List[str]) -> str:
 
     Return a string that will be sent as the user content alongside the reflexion system prompt.
     """
-    return ""
+    failures_text = "\n".join(f"- {f}" for f in failures)
+    return (
+        "以下是先前產生的程式碼:\n\n"
+        f"```python\n{prev_code}\n```\n\n"
+        "這段程式碼在以下測試案例中失敗了:\n\n"
+        f"{failures_text}\n\n"
+        "請根據上述錯誤修正程式碼,並輸出修正後的完整函式。"
+    )
 
 
 def apply_reflexion(
