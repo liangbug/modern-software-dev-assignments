@@ -44,7 +44,7 @@ Your task is to implement an **LLM-powered** alternative, `extract_action_items_
 
 Some  tips:
 - To produce structured outputs (i.e. JSON array of strings), refer to this documentation: https://ai.google.dev/gemini-api/docs/structured-output
-- To browse available Gemini models, refer to this documentation: https://ai.google.dev/gemini-api/docs/models. Note that larger/"pro" models will be more expensive and slower, so start with a "flash" model.
+- To browse available Gemini models, refer to this documentation: https://ai.google.dev/gemini-api/docs/models. Note that larger/"pro" models will be more expensive and slower, so start with a "flash-lite" model.
 
 ### TODO 2: Add Unit Tests 
 

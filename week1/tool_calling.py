@@ -9,7 +9,7 @@ from gemini_client import chat
 load_dotenv()
 
 NUM_RUNS_TIMES = 3
-
+MODEL_NAME = os.environ["GEMINI_MODEL"]
 
 # ==========================
 # Tool implementation (the "executor")
@@ -119,7 +119,7 @@ def extract_tool_call(text: str) -> Dict[str, Any]:
 
 def run_model_for_tool_call(system_prompt: str) -> Dict[str, Any]:
     response = chat(
-        model="gemini-3.6-flash",
+        model=MODEL_NAME,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": "Call the tool now."},

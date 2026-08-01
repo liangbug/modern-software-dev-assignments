@@ -7,6 +7,7 @@ from gemini_client import chat
 load_dotenv()
 
 NUM_RUNS_TIMES = 5
+MODEL_NAME = os.environ["GEMINI_MODEL"]
 
 # TODO: Fill this in! Try to get as close to 100% correctness across all runs as possible.
 YOUR_SYSTEM_PROMPT = """
@@ -60,7 +61,7 @@ def test_your_prompt(system_prompt: str) -> bool:
     for idx in range(NUM_RUNS_TIMES):
         print(f"Running test {idx + 1} of {NUM_RUNS_TIMES}")
         response = chat(
-            model="gemini-3.6-flash",
+            model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": USER_PROMPT},
