@@ -51,12 +51,20 @@ teste_extract.py:26-106
 ### Exercise 3: Refactor Existing Code for Clarity
 Prompt: 
 ```
-TODO
+重構 week2 的 FastAPI 後端以提升可讀性：
+把 app/routers/notes.py 與 app/routers/action_items.py 裡原始 Dict[str, Any] 請求/回應資料，換成正式 Pydantic schema。
+整理 app/db.py 資料庫存取層。
+init_db() 從模組匯入時執行，改成放進 app/main.py FastAPI lifespan/startup 事件。
+各 router 加一致錯誤處理（正確用 HTTPException 與輸入驗證）。
 ``` 
 
 Generated/Modified Code Snippets:
 ```
-TODO: List all modified code files with the relevant line numbers. (We anticipate there may be multiple scattered changes here – just produce as comprehensive of a list as you can.)
+schemas.py (new file — Pydantic models for notes and action items)
+app/db.py:78-87 (new get_action_item())
+app/main.py:1-24 (lifespan-based init_db(), imports cleanup)
+app/routers/notes.py:1-28 (Pydantic request/response models, error handling)
+app/routers/action_items.py:1-56 (Pydantic request/response models, 404 handling via db.get_action_item/db.get_note)
 ```
 
 
