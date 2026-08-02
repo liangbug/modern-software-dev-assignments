@@ -71,12 +71,16 @@ app/routers/action_items.py:1-56 (Pydantic request/response models, 404 handling
 ### Exercise 4: Use Agentic Mode to Automate a Small Task
 Prompt: 
 ```
-TODO
+(1) app/routers/action_items.py 新增端點，對外提供 LLM 抽取功能（extract_action_items_llm）。frontend/index.html 加「Extract LLM」按鈕，點擊呼叫該端點，顯示結果。
+(2) app/routers/notes.py 新增 GET 端點回傳所有筆記。frontend/index.html 加「List Notes」按鈕，點擊抓取顯示所有筆記。
+兩按鈕對應 JS fetch 呼叫與畫面渲染都要串接好。
 ``` 
 
 Generated Code Snippets:
 ```
-TODO: List all modified code files with the relevant line numbers.
+app/routers/action_items.py:36-47 (new /action-items/extract-llm endpoint)
+app/routers/notes.py:21-24 (new GET /notes endpoint)
+frontend/index.html:27-28, 39-40, 62-84 (Extract LLM / List Notes buttons + fetch handlers)
 ```
 
 

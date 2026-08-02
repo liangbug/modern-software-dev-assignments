@@ -13,7 +13,7 @@ from ..schemas import (
     ActionItemListResponse,
     ActionItemResponse,
 )
-from ..services.extract import extract_action_items
+from ..services.extract import extract_action_items, extract_action_items_llm
 
 
 router = APIRouter(prefix="/action-items", tags=["action-items"])
@@ -26,6 +26,20 @@ def extract(payload: ActionItemExtractRequest) -> ActionItemExtractResponse:
         note_id = db.insert_note(payload.text)
 
     items = extract_action_items(payload.text)
+    ids = db.insert_action_items(items, note_id=note_id)
+    return ActionItemExtractResponse(
+        note_id=note_id,
+        items=[ActionItemResponse(id=i, text=t) for i, t in zip(ids, items)],
+    )
+
+
+@router.post("/extract-llm", response_model=ActionItemExtractResponse)
+def extract_llm(payload: ActionItemExtractRequest) -> ActionItemExtractResponse:
+    note_id: Optional[int] = None
+    if payload.save_note:
+        note_id = db.insert_note(payload.text)
+
+    items = extract_action_items_llm(payload.text)
     ids = db.insert_action_items(items, note_id=note_id)
     return ActionItemExtractResponse(
         note_id=note_id,
