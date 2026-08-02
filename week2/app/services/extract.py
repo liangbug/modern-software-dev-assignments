@@ -65,6 +65,46 @@ def extract_action_items(text: str) -> List[str]:
         unique.append(item)
     return unique
 
+def extract_action_items_llm(text: str) -> List[str]:
+    system_prompt = """## 角色
+你是一名專門從會議記錄或任意文字中擷取待辦事項的助理。
+
+## 任務
+閱讀輸入文字，找出所有可執行的任務、TODO、下一步行動，輸出成簡潔、命令語氣的字串。
+- 去除項目符號、checkbox 標記，以及 `TODO:`、`Action:` 等前綴
+- 若文字中沒有任何待辦事項，輸出空陣列"""
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": text},
+    ]
+    options = {
+        "temperature": 0,
+        "response_mime_type": "application/json",
+        "response_schema": {"type": "array", "items": {"type": "string"}},
+    }
+    model =  os.environ["GEMINI_MODEL"]
+    response = chat(model, messages, options=options)
+    content = response.message.content
+    try:
+        items: Any = json.loads(content)
+    except (json.JSONDecodeError, TypeError):
+        return []
+    if not isinstance(items, list):
+        return []
+    cleaned: List[str] = []
+    seen: set[str] = set()
+    for item in items:
+        if not isinstance(item, str):
+            continue
+        stripped = item.strip()
+        if not stripped:
+            continue
+        lowered = stripped.lower()
+        if lowered in seen:
+            continue
+        seen.add(lowered)
+        cleaned.append(stripped)
+    return cleaned
 
 def _looks_imperative(sentence: str) -> bool:
     words = re.findall(r"[A-Za-z']+", sentence)

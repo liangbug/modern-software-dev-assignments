@@ -46,6 +46,8 @@ def chat(model: str, messages: list, options: Optional[dict] = None) -> SimpleNa
     config = types.GenerateContentConfig(
         system_instruction=system_instruction,
         temperature=options.get("temperature"),
+        response_mime_type=options.get("response_mime_type"),
+        response_schema=options.get("response_schema"),
     )
     response = _get_client().models.generate_content(
         model=model,
