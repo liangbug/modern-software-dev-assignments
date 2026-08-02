@@ -87,12 +87,14 @@ frontend/index.html:27-28, 39-40, 62-84 (Extract LLM / List Notes buttons + fetc
 ### Exercise 5: Generate a README from the Codebase
 Prompt: 
 ```
-TODO
+分析 week2 的程式碼庫（FastAPI 應用、SQLite 儲存、Gemini 驅動的抽取功能、前端頁面），
+在 week2/ 底下生成一份 README.md，內容至少包含：
+專案簡介、環境設定與啟動方式（uv/poetry + uvicorn）、API 端點與其功能說明、以及如何用 pytest 執行測試套件。
 ``` 
 
 Generated Code Snippets:
 ```
-TODO: List all modified code files with the relevant line numbers.
+README.md
 ```
 
 
