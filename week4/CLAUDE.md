@@ -2,16 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Scope
+## 範圍
 
-This is `week4/` of a multi-week assignment repo (see repo-root `CLAUDE.md` for cross-week conventions).
-Week 4's own goal, per `assignment.md`: build 2+ Claude Code automations (slash commands in
-`.claude/commands/*.md`, CLAUDE.md guidance, and/or SubAgents) that meaningfully improve the dev workflow
-on top of the starter app below, then use those automations to extend the app and document everything in
-`writeup.md`. `.claude/agents/` and `.claude/skills/` are empty as of now — automations are still to be
-built, not pre-existing infra.
+這是多週作業 repo 底下的 `week4/` 目錄（repo 根目錄的 `CLAUDE.md` 有跨週共通慣例）。Week 4 本身的任務目標，
+依 `assignment.md`：在下方 starter app 之上,打造至少 2 個 Claude Code 自動化(`.claude/commands/*.md` slash
+command、CLAUDE.md guidance、SubAgent 任選組合),再用這些自動化去擴充 starter app,並把設計與使用情形寫進
+`writeup.md`。
 
-## Commands (run from inside `week4/`)
+目前狀態：
+- `.claude/skills/refactor-module/SKILL.md`、`.claude/skills/run-test/SKILL.md` 已建立，是這份作業自己的
+  交付物；`.claude/skills/sync-docs/` 目錄已建但尚未放 `SKILL.md`。
+- `.claude/agents/{code-agent,db-agent,doc-agent,refactor-agent,test-agent}/` 五個資料夾已建立但都是空的
+  —— SubAgent 設定還沒寫。
+- 尚無 `.claude/commands/`（slash command 這條路還沒動工）。
+- `writeup.md` 目前整份都是 TODO,尚未填寫。
+
+## 指令（在 `week4/` 目錄內執行）
 
 ```bash
 make run     # uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
@@ -21,40 +27,39 @@ make lint    # ruff check .
 make seed    # python -c "from backend.app.db import apply_seed_if_needed; apply_seed_if_needed()"
 ```
 
-Single test: `pytest -q backend/tests/test_notes.py::test_create_note`. `PYTHONPATH=.` is exported by the
-Makefile; set it manually if running pytest/uvicorn outside `make`.
+單獨跑一個測試：`pytest -q backend/tests/test_notes.py::test_create_note`。Makefile 會 export
+`PYTHONPATH := .`；若不透過 `make` 直接跑 pytest/uvicorn，記得自行設定 `PYTHONPATH=.`（PowerShell 用
+`$env:PYTHONPATH = "."`）。
 
-## Architecture
+## 架構
 
 ```
 backend/app/
-  main.py              # FastAPI app: mounts frontend/ as static, creates tables + seeds DB on startup
-  db.py                # SQLAlchemy engine/session (SQLite at data/app.db, override via DATABASE_PATH);
-                        # apply_seed_if_needed() loads data/seed.sql only on first run
-  models.py            # Note, ActionItem SQLAlchemy models
-  schemas.py           # Pydantic *Create / *Read pairs
-  routers/notes.py      # /notes CRUD + GET /notes/search/?q=
+  main.py               # FastAPI app：把 frontend/ mount 成 static，啟動時建表 + seed DB
+  db.py                 # SQLAlchemy engine/session（SQLite 位於 data/app.db，可用 DATABASE_PATH 覆寫）；
+                         # apply_seed_if_needed() 只在 data/app.db 第一次不存在時載入 data/seed.sql
+  models.py             # Note、ActionItem 兩個 SQLAlchemy models
+  schemas.py            # Pydantic *Create / *Read 成對出現
+  routers/notes.py       # /notes CRUD（目前只有 list/create/get）+ GET /notes/search/?q=
   routers/action_items.py
-  services/extract.py   # extract_action_items(text) — heuristic line-based extraction
-frontend/               # plain HTML/CSS/JS, no build step, served via FastAPI StaticFiles
+  services/extract.py    # extract_action_items(text) —— 逐行啟發式抽取
+frontend/                # 純 HTML/CSS/JS，無 build step，由 FastAPI StaticFiles 提供
 data/app.db, data/seed.sql
-docs/TASKS.md           # discrete tasks to practice agent-driven workflows against this app
+docs/TASKS.md            # 一批離散任務，設計上是拿來練習 agent 驅動工作流程的靶子
 ```
 
-Tests use a `client` fixture (`backend/tests/conftest.py`) that overrides `get_db` with a temp-file SQLite
-DB, so tests never touch `data/app.db`.
+測試用 `backend/tests/conftest.py` 裡的 `client` fixture，把 `get_db` 換成暫存檔 SQLite DB，所以測試永遠不
+會動到 `data/app.db`。
 
-### `docs/TASKS.md` — candidate tasks to drive automations against
+### `docs/TASKS.md` —— 拿來驅動自動化的候選任務
 
-Pre-commit setup, `/notes/search` extension, action-item completion flow, tag parsing in `extract.py`,
-notes CRUD (edit/delete), request validation/error handling, and a docs-drift check against `/openapi.json`.
-Use these as the concrete workflow an automation (slash command / subagent) is exercised on — don't invent
-unrelated feature work when demonstrating an automation.
+pre-commit 設置、`/notes/search` 擴充、action item 完成流程、`extract.py` 的 tag 解析、notes CRUD（編輯/
+刪除）、request 驗證與錯誤處理、對 `/openapi.json` 的文件漂移檢查。建自動化時優先拿這些任務當練習對象，
+別在示範自動化時另外發明不相關的功能。
 
-## Deliverables to keep in sync
+## 交付物同步檢查
 
-- Automations live in `.claude/commands/*.md` (slash commands) and/or subagent configs — check these exist
-  and are documented before considering the assignment's Part I done.
-- `writeup.md` at `week4/` root has a fixed template (Design inspiration / Design / How to run / Before vs.
-  after / How it enhanced the app) per automation — fill it in as automations are built and used, don't
-  leave it for the end.
+- 自動化放在 `.claude/commands/*.md`（slash command）、`.claude/skills/*/SKILL.md`、`.claude/agents/*/`
+  （SubAgent 設定）——判斷 Part I 是否完成前，先確認這些檔案真的存在且有記錄在 `writeup.md`。
+- `writeup.md` 每個自動化固定要填：Design inspiration / Design / How to run / Before vs. after / How it
+  enhanced the app 五段，隨自動化完成隨填，別留到最後一次補。
