@@ -1,0 +1,19 @@
+{
+  "skill_name": "sync-docs",
+  "evals": [
+    {
+      "id": 1,
+      "name": "status-drift",
+      "prompt": "幫我 sync docs 一下,看 week4 底下的 CLAUDE.md 講的目前狀態,跟 .claude/skills、.claude/agents、.claude/commands 實際檔案是不是對得上",
+      "expected_output": "抓到 week4/CLAUDE.md「目前狀態」段落寫 sync-docs 尚未放 SKILL.md,但實際上 .claude/skills/sync-docs/SKILL.md 已存在,並修正該段文字。agents/commands 部分如果本來就對得上,不應該動它。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "api-drift",
+      "prompt": "檢查一下文件跟程式碼是不是有落差,尤其 api 那塊",
+      "expected_output": "抓到 week4/CLAUDE.md 架構段寫 notes router 的 list/create/get/update/delete 都已支援,但 backend/app/routers/notes.py 實際上沒有 update/delete,只有 list/create/get/search;修正文字反映實際狀況(且不應該去改程式碼本身去補 update/delete)。",
+      "files": []
+    }
+  ]
+}
