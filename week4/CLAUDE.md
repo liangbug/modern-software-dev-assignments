@@ -57,6 +57,38 @@ pre-commit 設置、`/notes/search` 擴充、action item 完成流程、`extract
 刪除）、request 驗證與錯誤處理、對 `/openapi.json` 的文件漂移檢查。建自動化時優先拿這些任務當練習對象，
 別在示範自動化時另外發明不相關的功能。
 
+## Code navigation / entry points
+
+- 啟動 app：`make run`（`uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000`），進入點
+  `backend/app/main.py`。
+- Router 在 `backend/app/routers/`：`notes.py`（/notes CRUD + /notes/search/）、
+  `action_items.py`（/action_items）。新增 endpoint 從這裡下手。
+- 測試在 `backend/tests/`，共用 fixture 在 `backend/tests/conftest.py`（`client` fixture 把 `get_db`
+  換成暫存 SQLite，不會動到 `data/app.db`）。跑法：`make test` 或單獨
+  `pytest -q backend/tests/test_notes.py::test_create_note`。
+- DB seed：`backend/app/db.py` 的 `apply_seed_if_needed()`，只在 `data/app.db` 第一次不存在時套用
+  `data/seed.sql`。手動重跑：`make seed`。
+
+## Style / safety guardrails
+
+- Formatter/linter：black（line-length 100）+ ruff（`select = ["E","F","I","UP","B"]`，
+  `ignore = ["E501","B008"]`），設定在 repo 根目錄 `pyproject.toml`，適用整個 repo。改完程式一定跑
+  `make format && make lint`。
+- 安全可跑的指令：`make run`、`make test`、`make lint`、`make format`、`make seed`、單獨 `pytest`。
+- 避免：改動 `data/app.db`（測試永遠用暫存 DB，不該手動去動這個檔案）、跳過 pre-commit
+  （`--no-verify`）、直接改 `data/seed.sql` 卻不確認既有 `app.db` 不受影響、對外部服務發送請求。
+- Gate：合併/交付前，`make lint` 跟 `make test` 都要過；新增/修改 endpoint 一定要有對應測試。
+
+## Workflow snippets
+
+- 新增 endpoint 時：先在 `backend/tests/` 寫一個會失敗的測試 → 在對應 router
+  （`backend/app/routers/*.py`）實作 → 需要的話同步補 `schemas.py` 的 Pydantic 模型 → 跑
+  `make test` 確認轉綠 → 跑 `make format && make lint` 後再交付。
+- 修 bug 時：先重現（跑相關測試或手動呼叫 API）→ 定位到 `services/`、`routers/` 或 `models.py` →
+  修正 → 跑 `make test` 全跑一次確認沒有連帶壞掉別的測試。
+- 改完 API 形狀（新增/刪除欄位、endpoint）後，記得檢查 `/openapi.json` 跟文件（`writeup.md`、
+  `docs/TASKS.md`）有沒有跟著漂移，需要時用 `sync-docs` skill 補上。
+
 ## 交付物同步檢查
 
 - 自動化放在 `.claude/commands/*.md`（slash command）、`.claude/skills/*/SKILL.md`、`.claude/agents/*/`
