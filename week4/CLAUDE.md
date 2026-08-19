@@ -12,8 +12,11 @@ command、CLAUDE.md guidance、SubAgent 任選組合),再用這些自動化去�
 目前狀態：
 - `.claude/skills/refactor-module/SKILL.md`、`.claude/skills/run-test/SKILL.md` 已建立，是這份作業自己的
   交付物；`.claude/skills/sync-docs/` 目錄已建但尚未放 `SKILL.md`。
-- `.claude/agents/{code-agent,db-agent,doc-agent,refactor-agent,test-agent}/` 五個資料夾已建立但都是空的
-  —— SubAgent 設定還沒寫。
+- `.claude/agents/{plan-agent,db-agent,refactor-agent,test-agent,code-agent,doc-agent}.md` 六個 SubAgent
+  定義檔已建立（扁平放在 `.claude/agents/` 下，不是子資料夾），並已實跑過一次完整流程：
+  `plan-agent → db-agent → refactor-agent → test-agent → code-agent → test-agent → doc-agent`，練習任務是
+  `docs/TASKS.md` 第 4 項（Note 新增 `tags` 欄位、`extract.py` 解析 `#tag`）。規劃文件留在
+  `docs/plans/note-tags/{design.md,tasks.md,testing.md}`。
 - 尚無 `.claude/commands/`（slash command 這條路還沒動工）。
 - `writeup.md` 目前整份都是 TODO,尚未填寫。
 

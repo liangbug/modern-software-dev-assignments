@@ -10,6 +10,7 @@ class NoteRead(BaseModel):
     id: int
     title: str
     content: str
+    tags: list[str] = []
 
     class Config:
         from_attributes = True

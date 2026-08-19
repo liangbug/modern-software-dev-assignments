@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -7,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import Note
 from ..schemas import NoteCreate, NoteRead
+from ..services.extract import extract_tags
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -19,7 +18,7 @@ def list_notes(db: Session = Depends(get_db)) -> list[NoteRead]:
 
 @router.post("/", response_model=NoteRead, status_code=201)
 def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
-    note = Note(title=payload.title, content=payload.content)
+    note = Note(title=payload.title, content=payload.content, tags=extract_tags(payload.content))
     db.add(note)
     db.flush()
     db.refresh(note)
@@ -27,7 +26,7 @@ def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
 
 
 @router.get("/search/", response_model=list[NoteRead])
-def search_notes(q: Optional[str] = None, db: Session = Depends(get_db)) -> list[NoteRead]:
+def search_notes(q: str | None = None, db: Session = Depends(get_db)) -> list[NoteRead]:
     if not q:
         rows = db.execute(select(Note)).scalars().all()
     else:
