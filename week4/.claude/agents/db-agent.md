@@ -42,7 +42,12 @@ tools: Read, Write, Edit, Grep, Glob
 - 開發環境的rollback/safety做法:刪除`data/app.db`,讓app下次啟動時用新schema重建並套用新的
   `seed.sql`。不要在生產資料上這麼做——這裡只適用開發用的種子DB。
 
-### 6. 交棒
+### 6. 更新任務清單
+
+若`week4/docs/plans/<task-slug>/tasks.md`存在,把裡面標注`db-agent`的項目、且這次真的做完的,從
+`- [ ]`改成`- [x]`。只勾自己負責的項目,不動`refactor-agent`/`code-agent`那些項目的checkbox。
+
+### 7. 交棒
 
 列出改了`models.py`哪個欄位、`seed.sql`哪裡,並提醒refactor-agent接下來要同步`schemas.py`(哪個
 Create/Read model)跟`routers/`(若API回應需要帶出新欄位)。

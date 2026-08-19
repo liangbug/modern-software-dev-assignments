@@ -41,7 +41,12 @@ make lint
 
 確認乾淨,沒有殘留的型別或import錯誤。
 
-### 5. 交棒
+### 5. 更新任務清單
+
+若`week4/docs/plans/<task-slug>/tasks.md`存在,把裡面標注`refactor-agent`的項目、且這次真的做完的,從
+`- [ ]`改成`- [x]`。只勾自己負責的項目,不動`db-agent`/`code-agent`那些項目的checkbox。
+
+### 6. 交棒
 
 列出改了`schemas.py`哪個model的哪個欄位、router是否有動。提醒test-agent可以針對這個新結構開始寫測試了
 (結構已經存在,測試不會在collection階段就炸掉)。

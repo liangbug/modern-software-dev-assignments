@@ -61,8 +61,9 @@ b. Design of each automation, including goals, inputs/outputs, steps
 >   diffs. Never touches `backend/app/`.
 > - **code-agent** — implements only in `backend/app/` to turn test-agent's failing tests green, then
 >   self-checks with `make test` + `make format && make lint`.
-> - **doc-agent** — updates only `docs/API.md` and `docs/TASKS.md` (checked-off items) after tests are
->   green, and flags `writeup.md` sections to fill in — never touches code.
+> - **doc-agent** — updates only `docs/API.md` and `docs/TASKS_DONE.md` after tests are green (`docs/
+>   TASKS.md` itself is read-only — never edited, never annotated), and flags `writeup.md` sections to
+>   fill in — never touches code.
 > Ordering is dependency-driven, not arbitrary: schema must exist before models can be tested; structure
 > must be applied before tests can even collect; tests are written (TDD) before implementation; docs are
 > written last since they describe the final, settled state.
@@ -96,8 +97,9 @@ e. How you used the automation to enhance the starter application
 > `extract_tags` parsing rules and the `/notes/` create+read round-trip (test-agent), implemented
 > `extract_tags()` in `services/extract.py` and wired it into `POST /notes/` (code-agent), re-verified all
 > 11 tests green + lint clean (test-agent), and documented the new `tags` field in a newly-created
-> `docs/API.md` plus checked off the corresponding `docs/TASKS.md` bullets (doc-agent). The planning
-> artifacts are kept at `docs/plans/note-tags/` as evidence of the run.
+> `docs/API.md` plus recorded completion in `docs/TASKS_DONE.md` — `docs/TASKS.md` itself stayed
+> untouched (doc-agent). The planning artifacts are kept at `docs/plans/note-tags/` as evidence of the
+> run.
 
 
 ### *(Optional) Automation #3*

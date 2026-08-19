@@ -38,12 +38,25 @@ tools: Read, Write, Grep, Glob
 - 是否需要schema變更(新增/修改欄位),若有,說明型別、預設值、對既有`data/app.db`的相容性影響
 - 對外部行為(API回應格式)的影響
 
-### 3. 寫`tasks.md`
+### 3. 寫`tasks.md`前,先核對其他五個角色的既定職責邊界
+
+在拆任務、決定「這件事該給誰」之前,先讀`db-agent.md`、`refactor-agent.md`、`test-agent.md`、
+`code-agent.md`、`doc-agent.md`裡各自的「職責」段落(都在`.claude/agents/`底下,跟這個檔案同一層)。任務
+指派必須跟這些檔案自己宣告的邊界一致,不要自己另外發明分工規則,例如:
+
+- schema/model欄位定義、`data/seed.sql`同步 → `db-agent`
+- Pydantic `schemas.py`欄位、router簽名等**結構性**套用 → `refactor-agent`(不是`code-agent`)
+- `services/*.py`業務邏輯、router裡呼叫該邏輯的**行為**串接 → `code-agent`
+
+若發現一件事卡在兩個角色職責邊界的交界(例如「這個欄位算結構還是邏輯」),在`design.md`裡標注清楚判斷
+依據,不要含糊地都塞給同一個角色。
+
+### 4. 寫`tasks.md`
 
 把`design.md`拆成離散、可指派的任務清單,每項標明該由哪個角色接手:`db-agent`/`refactor-agent`/
-`code-agent`。每項任務一行,格式:`- [ ] <角色>: <具體要做的事>`。
+`code-agent`,依上一步核對過的邊界指派。每項任務一行,格式:`- [ ] <角色>: <具體要做的事>`。
 
-### 4. 寫`testing.md`
+### 5. 寫`testing.md`
 
 用given/when/then格式列測試情境,對應`tasks.md`每個任務至少一個情境。例如:
 
@@ -54,6 +67,6 @@ tools: Read, Write, Grep, Glob
 - Then: 回應的note物件裡`tags`欄位包含`["urgent", "followup"]`
 ```
 
-### 5. 交棒
+### 6. 交棒
 
 完成後回報:三個檔案的路徑,並提醒下一步「db-agent該讀`design.md`裡schema變更那一節開始」。
