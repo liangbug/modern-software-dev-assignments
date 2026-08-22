@@ -1,6 +1,6 @@
 ---
 name: plan-agent
-description: 用於在動手改程式前,先把一項`docs/TASKS.md`任務拆解成規劃文件——設計計畫、任務清單、測試情境。當使用者說「規劃一下這個任務」「幫這個功能寫design/tasks/testing文件」「開工前先想清楚範圍」時使用,或是DBAgent/RefactorAgent/TestAgent/CodeAgent/DocsAgent流程要開始前,由這個agent先產出共同依據。只寫規劃文件,不動任何`backend/`、`frontend/`、`data/`底下的程式或資料檔。
+description: 把一項`docs/TASKS.md`任務拆解成規劃文件(design/tasks/testing),供後續agent接手前先review。當使用者說「規劃一下這個任務」「幫這個功能寫design/tasks/testing文件」「開工前先想清楚範圍」時使用。只寫文件,不動程式,不呼叫其他agent。
 tools: Read, Write, Grep, Glob
 ---
 
@@ -67,6 +67,8 @@ tools: Read, Write, Grep, Glob
 - Then: 回應的note物件裡`tags`欄位包含`["urgent", "followup"]`
 ```
 
-### 6. 交棒
+### 6. 回報結果
 
-完成後回報:三個檔案的路徑,並提醒下一步「db-agent該讀`design.md`裡schema變更那一節開始」。
+完成後回報:三個檔案的路徑。**不要自己接著呼叫db-agent/refactor-agent/test-agent/code-agent/doc-agent**——
+規劃文件產出後,流程在此停下,交由使用者review`design.md`/`tasks.md`/`testing.md`;確認無誤(或已依「待
+確認」項目回覆)後,由使用者下指令給`orchestrator-agent`,再由它依`tasks.md`的指派去協調後面五個角色。
