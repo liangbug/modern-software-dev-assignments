@@ -10,15 +10,17 @@ command、CLAUDE.md guidance、SubAgent 任選組合),再用這些自動化去�
 `writeup.md`。
 
 目前狀態：
-- `.claude/skills/refactor-module/SKILL.md`、`.claude/skills/run-test/SKILL.md` 已建立，是這份作業自己的
-  交付物；`.claude/skills/sync-docs/` 目錄已建但尚未放 `SKILL.md`。
-- `.claude/agents/{plan-agent,db-agent,refactor-agent,test-agent,code-agent,doc-agent}.md` 六個 SubAgent
-  定義檔已建立（扁平放在 `.claude/agents/` 下，不是子資料夾），並已實跑過一次完整流程：
-  `plan-agent → db-agent → refactor-agent → test-agent → code-agent → test-agent → doc-agent`，練習任務是
-  `docs/TASKS.md` 第 4 項（Note 新增 `tags` 欄位、`extract.py` 解析 `#tag`）。規劃文件留在
-  `docs/plans/note-tags/{design.md,tasks.md,testing.md}`。
+- `.claude/skills/refactor-module/SKILL.md`、`.claude/skills/run-test/SKILL.md`、
+  `.claude/skills/sync-docs/SKILL.md` 三個 skill 都已建立，是這份作業自己的交付物。
+- `.claude/agents/{plan-agent,db-agent,refactor-agent,test-agent,code-agent,doc-agent,
+  orchestrator-agent}.md` 七個 SubAgent 定義檔已建立（扁平放在 `.claude/agents/` 下，不是子資料夾），
+  並已實跑過一次完整流程：`plan-agent → db-agent → refactor-agent → test-agent → code-agent →
+  test-agent → doc-agent`，練習任務是 `docs/TASKS.md` 第 4 項（Note 新增 `tags` 欄位、`extract.py`
+  解析 `#tag`）。規劃文件留在 `docs/plans/note-tags/{design.md,tasks.md,testing.md}`。
+  `orchestrator-agent` 負責依 `tasks.md` 分工依序呼叫其餘五個角色 agent。
 - 尚無 `.claude/commands/`（slash command 這條路還沒動工）。
-- `writeup.md` 目前整份都是 TODO,尚未填寫。
+- `writeup.md` 的 Automation #2（六角色 SubAgent pipeline）已填寫完成；Automation #1 與
+  Automation #3（optional）欄位仍是 TODO。
 
 ## 指令（在 `week4/` 目錄內執行）
 
@@ -43,8 +45,8 @@ backend/app/
                          # apply_seed_if_needed() 只在 data/app.db 第一次不存在時載入 data/seed.sql
   models.py             # Note、ActionItem 兩個 SQLAlchemy models
   schemas.py            # Pydantic *Create / *Read 成對出現
-  routers/notes.py       # /notes CRUD（目前只有 list/create/get）+ GET /notes/search/?q=
-  routers/action_items.py
+  routers/notes.py       # /notes CRUD（list/create/get/update/delete）+ GET /notes/search/?q=
+  routers/action_items.py # /action-items（list/create + PUT /{id}/complete）
   services/extract.py    # extract_action_items(text) —— 逐行啟發式抽取
 frontend/                # 純 HTML/CSS/JS，無 build step，由 FastAPI StaticFiles 提供
 data/app.db, data/seed.sql
@@ -65,7 +67,7 @@ pre-commit 設置、`/notes/search` 擴充、action item 完成流程、`extract
 - 啟動 app：`make run`（`uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000`），進入點
   `backend/app/main.py`。
 - Router 在 `backend/app/routers/`：`notes.py`（/notes CRUD + /notes/search/）、
-  `action_items.py`（/action_items）。新增 endpoint 從這裡下手。
+  `action_items.py`（/action-items，含 PUT /action-items/{id}/complete）。新增 endpoint 從這裡下手。
 - 測試在 `backend/tests/`，共用 fixture 在 `backend/tests/conftest.py`（`client` fixture 把 `get_db`
   換成暫存 SQLite，不會動到 `data/app.db`）。跑法：`make test` 或單獨
   `pytest -q backend/tests/test_notes.py::test_create_note`。

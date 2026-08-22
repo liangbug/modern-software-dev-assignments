@@ -3,6 +3,14 @@
 Completion log for items in `docs/TASKS.md` (read-only — this file records status instead of
 editing that one). Verified with `make test`: 29 passed.
 
+## #1 — Enable pre-commit and fix the repo
+`.pre-commit-config.yaml` exists at the monorepo root (applies to all weeks, incl. `week4/`):
+black, `ruff --fix`, `end-of-file-fixer`, `trailing-whitespace`. Hooks are installed
+(`.git/hooks/pre-commit` present, pre-commit-generated). Current tree is clean under both
+`ruff check .` (`All checks passed!`) and the existing formatting — no outstanding
+formatting/lint issues in `week4/`. Note: this config lives at the repo root, not inside
+`week4/`, since it is shared across weeks (see root `CLAUDE.md`).
+
 ## #4 — Improve extraction logic
 Added `extract_tags(text: str) -> list[str]` in `backend/app/services/extract.py` (regex-based
 `#tag` parsing, lowercase-normalized, de-duplicated by first-occurrence order, returns `[]` when
@@ -57,3 +65,12 @@ is unchanged. Tests added: `POST /notes/` and `PUT /notes/{id}` with blank/white
 {missing-id}/complete` → 404 (pre-existing behavior, now covered). 404 coverage for `PUT`/`DELETE
 /notes/{id}` was already added under task #5 and intentionally not duplicated. Doc'd in
 `docs/API.md`.
+
+## #7 — Docs drift check (manual for now)
+`docs/API.md` exists and was verified against `backend/app/routers/notes.py`,
+`backend/app/routers/action_items.py`, and `backend/app/schemas.py`: every endpoint, request/
+response field, status code, and validation rule documented matches the current code (no drift
+found as of this check). This is still a manual check (task explicitly says "manual for now") —
+no automated CI step exists yet; the `.claude/skills/sync-docs/SKILL.md` skill was authored to
+help with exactly this kind of check but has no recorded run against this repo yet (see
+`writeup.md` Automation #1 discussion).

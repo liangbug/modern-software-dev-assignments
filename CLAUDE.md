@@ -56,7 +56,7 @@ backend/app/
   schemas.py           # Pydantic request/response models（*Create / *Read 成對出現）
   routers/
     notes.py           # /notes 端點（CRUD + /notes/search/）
-    action_items.py    # /action_items 端點
+    action_items.py    # /action-items 端點
   services/
     extract.py         # extract_action_items(text)：從筆記文字抽出 action item
                         # （多數週次是啟發式的逐行抽取；若要換成 LLM 抽取邏輯可參考 week1/ 的 prompting 技巧）
