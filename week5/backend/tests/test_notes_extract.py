@@ -8,18 +8,18 @@ def test_extract_without_apply_does_not_write_action_items(client):
     }
     r = client.post("/notes/", json=payload)
     assert r.status_code == 201, r.text
-    note_id = r.json()["id"]
-    assert r.json()["tags"] == []
+    note_id = r.json()["data"]["id"]
+    assert r.json()["data"]["tags"] == []
 
     r = client.post(f"/notes/{note_id}/extract")
     assert r.status_code == 200, r.text
-    data = r.json()
+    data = r.json()["data"]
     assert data["tags"] == []
     assert data["action_items"] == ["Book flights", "Reserve hotel"]
 
     # No action items should have been created since apply was not set.
     r = client.get("/action-items/")
-    assert r.json() == []
+    assert r.json()["data"] == []
 
 
 def test_extract_with_apply_true_persists_tags_and_action_items(client):
@@ -29,20 +29,20 @@ def test_extract_with_apply_true_persists_tags_and_action_items(client):
     }
     r = client.post("/notes/", json=payload)
     assert r.status_code == 201, r.text
-    note_id = r.json()["id"]
+    note_id = r.json()["data"]["id"]
 
     r = client.post(f"/notes/{note_id}/extract", params={"apply": "true"})
     assert r.status_code == 200, r.text
-    data = r.json()
+    data = r.json()["data"]
     assert data["tags"] == ["backend"]
     assert data["action_items"] == ["Write extract endpoint", "Add tests"]
 
     r = client.get(f"/notes/{note_id}")
-    tag_names = {tag["name"] for tag in r.json()["tags"]}
+    tag_names = {tag["name"] for tag in r.json()["data"]["tags"]}
     assert tag_names == {"backend"}
 
     r = client.get("/action-items/")
-    descriptions = {item["description"] for item in r.json()}
+    descriptions = {item["description"] for item in r.json()["data"]}
     assert descriptions == {"Write extract endpoint", "Add tests"}
 
 
@@ -59,11 +59,11 @@ def test_extract_mixed_text_hashtags_checkboxes_and_legacy_markers(client):
     }
     r = client.post("/notes/", json=payload)
     assert r.status_code == 201, r.text
-    note_id = r.json()["id"]
+    note_id = r.json()["data"]["id"]
 
     r = client.post(f"/notes/{note_id}/extract")
     assert r.status_code == 200, r.text
-    data = r.json()
+    data = r.json()["data"]
     assert data["tags"] == ["project", "urgent"]
     assert data["action_items"] == [
         "Follow up with client",

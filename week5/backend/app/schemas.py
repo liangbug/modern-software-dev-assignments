@@ -41,7 +41,7 @@ class NoteExtractResult(BaseModel):
 
 
 class ActionItemCreate(BaseModel):
-    description: str
+    description: str = Field(min_length=1, max_length=2000)
 
 
 class ActionItemRead(BaseModel):
