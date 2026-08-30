@@ -1,6 +1,7 @@
 # API Reference
 
 ## Route Deltas
+- Changed: `NoteCreate` schema now validates `title` (length 1-200) and `content` (length 1-5000); requests outside these bounds return `422`. Applies to `POST /notes/` and `PUT /notes/{note_id}`.
 - Changed: `GET /action-items/` now accepts an optional `completed` (boolean) query param to filter by completion status.
 - Added: `POST /action-items/bulk-complete` — marks multiple action items completed in a single transaction; rolls back entirely (no partial completion) if any id does not exist.
 
@@ -85,7 +86,7 @@ Mark an action item as completed.
 ## Schemas
 ### NoteCreate
 ```json
-{ "title": "string", "content": "string" }
+{ "title": "string (1-200 chars)", "content": "string (1-5000 chars)" }
 ```
 
 ### NoteRead

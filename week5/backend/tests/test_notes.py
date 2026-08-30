@@ -57,3 +57,28 @@ def test_delete_note(client):
 def test_delete_note_not_found(client):
     r = client.delete("/notes/999999")
     assert r.status_code == 404
+
+
+def test_create_note_validation_error_empty_title(client):
+    r = client.post("/notes/", json={"title": "", "content": "Valid content"})
+    assert r.status_code == 422
+
+
+def test_create_note_validation_error_title_too_long(client):
+    r = client.post("/notes/", json={"title": "x" * 201, "content": "Valid content"})
+    assert r.status_code == 422
+
+
+def test_create_note_validation_error_content_too_long(client):
+    r = client.post("/notes/", json={"title": "Valid", "content": "x" * 5001})
+    assert r.status_code == 422
+
+
+def test_update_note_validation_error(client):
+    payload = {"title": "Original", "content": "Original content"}
+    r = client.post("/notes/", json=payload)
+    assert r.status_code == 201, r.text
+    note_id = r.json()["id"]
+
+    r = client.put(f"/notes/{note_id}", json={"title": "", "content": "Y"})
+    assert r.status_code == 422

@@ -65,10 +65,17 @@ export default function NotesSection() {
   }
 
   async function handleDelete(id) {
+    const previousNotes = notes;
+    const previousTotal = total;
+    setError(null);
+    setNotes((current) => current.filter((n) => n.id !== id));
+    setTotal((current) => Math.max(0, current - 1));
     try {
       await deleteNote(id);
       await refresh(page, query);
     } catch (err) {
+      setNotes(previousNotes);
+      setTotal(previousTotal);
       setError(err.message);
     }
   }
@@ -84,11 +91,21 @@ export default function NotesSection() {
   }
 
   async function handleUpdate(id) {
+    const previousNotes = notes;
+    const nextTitle = editTitle;
+    const nextContent = editContent;
+    setError(null);
+    setNotes((current) =>
+      current.map((n) =>
+        n.id === id ? { ...n, title: nextTitle, content: nextContent } : n
+      )
+    );
+    setEditingId(null);
     try {
-      await updateNote(id, { title: editTitle, content: editContent });
-      setEditingId(null);
+      await updateNote(id, { title: nextTitle, content: nextContent });
       await refresh(page, query);
     } catch (err) {
+      setNotes(previousNotes);
       setError(err.message);
     }
   }

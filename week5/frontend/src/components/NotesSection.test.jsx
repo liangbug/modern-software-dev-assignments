@@ -98,4 +98,71 @@ describe("NotesSection", () => {
     expect(screen.getByRole("button", { name: "上一頁" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "下一頁" })).toBeDisabled();
   });
+
+  it("optimistically removes a note on delete and rolls back on failure", async () => {
+    const user = userEvent.setup();
+    global.fetch = vi
+      .fn()
+      .mockImplementationOnce(() =>
+        jsonResponse({
+          items: [{ id: 1, title: "Hello", content: "World" }],
+          total: 1,
+          page: 1,
+          page_size: 10,
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: false,
+          status: 404,
+          json: () => Promise.resolve({ detail: "Note not found" }),
+          text: () => Promise.resolve("Note not found"),
+        })
+      );
+
+    render(<NotesSection />);
+    expect(await screen.findByText(/Hello: World/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    // Rolled back to showing the note again after the failed request.
+    expect(await screen.findByText(/Hello: World/)).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+  });
+
+  it("optimistically updates a note on edit and rolls back on failure", async () => {
+    const user = userEvent.setup();
+    global.fetch = vi
+      .fn()
+      .mockImplementationOnce(() =>
+        jsonResponse({
+          items: [{ id: 1, title: "Hello", content: "World" }],
+          total: 1,
+          page: 1,
+          page_size: 10,
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: false,
+          status: 422,
+          json: () => Promise.resolve({ detail: "Invalid" }),
+          text: () => Promise.resolve("Invalid"),
+        })
+      );
+
+    render(<NotesSection />);
+    expect(await screen.findByText(/Hello: World/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const titleInput = screen.getByLabelText("Edit title 1");
+    await user.clear(titleInput);
+    await user.type(titleInput, "Updated");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // Rolled back to the original note after the failed request.
+    expect(await screen.findByText(/Hello: World/)).toBeInTheDocument();
+    expect(screen.queryByText(/Updated: World/)).not.toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+  });
 });
