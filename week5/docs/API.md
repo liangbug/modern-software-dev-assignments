@@ -1,5 +1,9 @@
 # API Reference
 
+## Route Deltas
+- Changed: `GET /action-items/` now accepts an optional `completed` (boolean) query param to filter by completion status.
+- Added: `POST /action-items/bulk-complete` — marks multiple action items completed in a single transaction; rolls back entirely (no partial completion) if any id does not exist.
+
 Generated from the running app's `/openapi.json` (FastAPI title: "Modern Software Dev Starter (Week 5)", version `0.1.0`).
 
 ## Route Deltas
@@ -55,13 +59,21 @@ Delete a note.
 
 ## action_items
 ### GET /action-items/
-List all action items.
+List action items, optionally filtered by completion status.
+- Query params: `completed` (boolean, optional) — when provided, only returns items matching that completion state
 - Response `200`: array of `ActionItemRead`
 
 ### POST /action-items/
 Create an action item.
 - Body: `ActionItemCreate` — `{ "description": string }`
 - Response `201`: `ActionItemRead`
+- Response `422`: validation error
+
+### POST /action-items/bulk-complete
+Mark multiple action items as completed in a single transaction.
+- Body: `BulkCompleteRequest` — `{ "ids": [integer, ...] }`
+- Response `200`: array of `ActionItemRead` (all requested items, now completed)
+- Response `404`: if any id does not exist, the entire batch is rolled back (no items are marked completed) and an error is returned
 - Response `422`: validation error
 
 ### PUT /action-items/{item_id}/complete
@@ -94,4 +106,9 @@ Mark an action item as completed.
 ### ActionItemRead
 ```json
 { "id": 0, "description": "string", "completed": false }
+```
+
+### BulkCompleteRequest
+```json
+{ "ids": [0] }
 ```

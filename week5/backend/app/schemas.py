@@ -33,3 +33,7 @@ class ActionItemRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class BulkCompleteRequest(BaseModel):
+    ids: list[int]

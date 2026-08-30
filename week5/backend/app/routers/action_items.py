@@ -4,14 +4,19 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import ActionItem
-from ..schemas import ActionItemCreate, ActionItemRead
+from ..schemas import ActionItemCreate, ActionItemRead, BulkCompleteRequest
 
 router = APIRouter(prefix="/action-items", tags=["action_items"])
 
 
 @router.get("/", response_model=list[ActionItemRead])
-def list_items(db: Session = Depends(get_db)) -> list[ActionItemRead]:
-    rows = db.execute(select(ActionItem)).scalars().all()
+def list_items(
+    completed: bool | None = None, db: Session = Depends(get_db)
+) -> list[ActionItemRead]:
+    stmt = select(ActionItem)
+    if completed is not None:
+        stmt = stmt.where(ActionItem.completed == completed)
+    rows = db.execute(stmt).scalars().all()
     return [ActionItemRead.model_validate(row) for row in rows]
 
 
@@ -22,6 +27,35 @@ def create_item(payload: ActionItemCreate, db: Session = Depends(get_db)) -> Act
     db.flush()
     db.refresh(item)
     return ActionItemRead.model_validate(item)
+
+
+@router.post("/bulk-complete", response_model=list[ActionItemRead])
+def bulk_complete_items(
+    payload: BulkCompleteRequest, db: Session = Depends(get_db)
+) -> list[ActionItemRead]:
+    items: list[ActionItem] = []
+    missing_ids: list[int] = []
+    for item_id in payload.ids:
+        item = db.get(ActionItem, item_id)
+        if item is None:
+            missing_ids.append(item_id)
+            continue
+        item.completed = True
+        db.add(item)
+        items.append(item)
+
+    if missing_ids:
+        # Trigger rollback of any staged completions above by propagating
+        # the error out of the request-scoped session dependency.
+        raise HTTPException(
+            status_code=404,
+            detail=f"Action item(s) not found: {sorted(missing_ids)}",
+        )
+
+    db.flush()
+    for item in items:
+        db.refresh(item)
+    return [ActionItemRead.model_validate(item) for item in items]
 
 
 @router.put("/{item_id}/complete", response_model=ActionItemRead)
