@@ -42,8 +42,9 @@ export function deleteNote(id) {
   return fetchJSON(`/notes/${id}`, { method: "DELETE" });
 }
 
-export function listActionItems() {
-  return fetchJSON("/action-items/");
+export function listActionItems({ completed } = {}) {
+  const params = typeof completed === "boolean" ? `?completed=${completed}` : "";
+  return fetchJSON(`/action-items/${params}`);
 }
 
 export function createActionItem({ description }) {
@@ -56,4 +57,12 @@ export function createActionItem({ description }) {
 
 export function completeActionItem(id) {
   return fetchJSON(`/action-items/${id}/complete`, { method: "PUT" });
+}
+
+export function bulkCompleteActionItems(ids) {
+  return fetchJSON("/action-items/bulk-complete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
 }
