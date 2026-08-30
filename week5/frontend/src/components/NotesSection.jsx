@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
-import { createNote, deleteNote, listNotes, updateNote } from "../api.js";
+import { createNote, deleteNote, searchNotes, updateNote } from "../api.js";
+
+const PAGE_SIZE = 10;
 
 export default function NotesSection() {
   const [notes, setNotes] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState(null);
@@ -10,18 +15,42 @@ export default function NotesSection() {
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  async function refresh() {
+  async function refresh(targetPage, targetQuery) {
     try {
-      const data = await listNotes();
-      setNotes(data);
+      const data = await searchNotes({
+        q: targetQuery,
+        page: targetPage,
+        pageSize: PAGE_SIZE,
+      });
+      setNotes(data.items);
+      setTotal(data.total);
+      setPage(data.page);
     } catch (err) {
       setError(err.message);
     }
   }
 
   useEffect(() => {
-    refresh();
+    refresh(1, "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function handleSearchSubmit(e) {
+    e.preventDefault();
+    await refresh(1, query);
+  }
+
+  async function handlePrev() {
+    if (page > 1) {
+      await refresh(page - 1, query);
+    }
+  }
+
+  async function handleNext() {
+    if (page * PAGE_SIZE < total) {
+      await refresh(page + 1, query);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -29,7 +58,7 @@ export default function NotesSection() {
       await createNote({ title, content });
       setTitle("");
       setContent("");
-      await refresh();
+      await refresh(1, query);
     } catch (err) {
       setError(err.message);
     }
@@ -38,7 +67,7 @@ export default function NotesSection() {
   async function handleDelete(id) {
     try {
       await deleteNote(id);
-      await refresh();
+      await refresh(page, query);
     } catch (err) {
       setError(err.message);
     }
@@ -58,16 +87,27 @@ export default function NotesSection() {
     try {
       await updateNote(id, { title: editTitle, content: editContent });
       setEditingId(null);
-      await refresh();
+      await refresh(page, query);
     } catch (err) {
       setError(err.message);
     }
   }
 
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   return (
     <section>
       <h2>Notes</h2>
       {error && <p role="alert">{error}</p>}
+      <form onSubmit={handleSearchSubmit}>
+        <input
+          aria-label="Search notes"
+          placeholder="Search notes"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <button type="submit">Search</button>
+      </form>
       <form onSubmit={handleSubmit}>
         <input
           aria-label="Note title"
@@ -85,6 +125,9 @@ export default function NotesSection() {
         />
         <button type="submit">Add</button>
       </form>
+      <p>
+        共 {total} 筆結果，第 {page} / {totalPages} 頁
+      </p>
       <ul>
         {notes.map((n) =>
           editingId === n.id ? (
@@ -111,6 +154,14 @@ export default function NotesSection() {
           )
         )}
       </ul>
+      <div>
+        <button onClick={handlePrev} disabled={page <= 1}>
+          上一頁
+        </button>
+        <button onClick={handleNext} disabled={page * PAGE_SIZE >= total}>
+          下一頁
+        </button>
+      </div>
     </section>
   );
 }

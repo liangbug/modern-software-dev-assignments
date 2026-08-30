@@ -2,6 +2,13 @@
 
 Generated from the running app's `/openapi.json` (FastAPI title: "Modern Software Dev Starter (Week 5)", version `0.1.0`).
 
+## Route Deltas
+- Changed: `GET /notes/search/` — now supports pagination and sorting.
+  - Added query params: `page` (integer, default `1`), `page_size` (integer, default `10`), `sort` (string, default `created_desc`; also accepts `title_asc`).
+  - Response shape changed from an array of `NoteRead` to `NoteSearchResult` — `{ items: NoteRead[], total: number, page: number, page_size: number }`.
+  - `q` matching is now case-insensitive over `title`/`content`.
+- Added: `NoteSearchResult` schema.
+
 ## root
 ### GET /
 Returns the built frontend's `index.html` (`frontend/dist/index.html`).
@@ -18,9 +25,13 @@ Create a note.
 - Response `422`: validation error
 
 ### GET /notes/search/
-Search notes by title/content substring match.
-- Query params: `q` (string, optional)
-- Response `200`: array of `NoteRead`
+Search notes by title/content, case-insensitive substring match, with pagination and sorting.
+- Query params:
+  - `q` (string, optional) — keyword matched case-insensitively against `title`/`content`
+  - `page` (integer, optional, default `1`)
+  - `page_size` (integer, optional, default `10`)
+  - `sort` (string, optional, default `created_desc`) — `created_desc` or `title_asc`
+- Response `200`: `NoteSearchResult`
 - Response `422`: validation error
 
 ### GET /notes/{note_id}
@@ -68,6 +79,11 @@ Mark an action item as completed.
 ### NoteRead
 ```json
 { "id": 0, "title": "string", "content": "string" }
+```
+
+### NoteSearchResult
+```json
+{ "items": [{ "id": 0, "title": "string", "content": "string" }], "total": 0, "page": 1, "page_size": 10 }
 ```
 
 ### ActionItemCreate

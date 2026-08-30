@@ -13,9 +13,13 @@ export function listNotes() {
   return fetchJSON("/notes/");
 }
 
-export function searchNotes(q) {
-  const params = q ? `?q=${encodeURIComponent(q)}` : "";
-  return fetchJSON(`/notes/search/${params}`);
+export function searchNotes({ q = "", page = 1, pageSize = 10, sort = "created_desc" } = {}) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("page", String(page));
+  params.set("page_size", String(pageSize));
+  params.set("sort", sort);
+  return fetchJSON(`/notes/search/?${params.toString()}`);
 }
 
 export function getNote(id) {
