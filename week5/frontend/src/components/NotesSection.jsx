@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createNote, deleteNote, searchNotes, updateNote } from "../api.js";
+import { createNote, deleteNote, listTags, searchNotes, updateNote } from "../api.js";
 
 const PAGE_SIZE = 10;
 
@@ -8,6 +8,8 @@ export default function NotesSection() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
+  const [availableTags, setAvailableTags] = useState([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState(null);
@@ -15,10 +17,11 @@ export default function NotesSection() {
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  async function refresh(targetPage, targetQuery) {
+  async function refresh(targetPage, targetQuery, targetTag = tagFilter) {
     try {
       const data = await searchNotes({
         q: targetQuery,
+        tag: targetTag,
         page: targetPage,
         pageSize: PAGE_SIZE,
       });
@@ -30,14 +33,29 @@ export default function NotesSection() {
     }
   }
 
+  async function refreshTags() {
+    try {
+      const tags = await listTags();
+      setAvailableTags(tags);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   useEffect(() => {
     refresh(1, "");
+    refreshTags();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSearchSubmit(e) {
     e.preventDefault();
     await refresh(1, query);
+  }
+
+  async function handleTagFilterChange(nextTag) {
+    setTagFilter(nextTag);
+    await refresh(1, query, nextTag);
   }
 
   async function handlePrev() {
@@ -59,6 +77,7 @@ export default function NotesSection() {
       setTitle("");
       setContent("");
       await refresh(1, query);
+      await refreshTags();
     } catch (err) {
       setError(err.message);
     }
@@ -125,6 +144,21 @@ export default function NotesSection() {
         />
         <button type="submit">Search</button>
       </form>
+      <label>
+        依標籤篩選{" "}
+        <select
+          aria-label="Filter by tag"
+          value={tagFilter}
+          onChange={(e) => handleTagFilterChange(e.target.value)}
+        >
+          <option value="">全部標籤</option>
+          {availableTags.map((t) => (
+            <option key={t.id} value={t.name}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </label>
       <form onSubmit={handleSubmit}>
         <input
           aria-label="Note title"
@@ -165,6 +199,11 @@ export default function NotesSection() {
           ) : (
             <li key={n.id}>
               {n.title}: {n.content}
+              {(n.tags || []).map((t) => (
+                <span className="tag-chip" key={t.id}>
+                  {t.name}
+                </span>
+              ))}
               <button onClick={() => startEdit(n)}>Edit</button>
               <button onClick={() => handleDelete(n.id)}>Delete</button>
             </li>

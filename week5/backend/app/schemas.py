@@ -6,10 +6,23 @@ class NoteCreate(BaseModel):
     content: str = Field(min_length=1, max_length=5000)
 
 
+class TagCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class TagRead(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
 class NoteRead(BaseModel):
     id: int
     title: str
     content: str
+    tags: list[TagRead] = []
 
     class Config:
         from_attributes = True

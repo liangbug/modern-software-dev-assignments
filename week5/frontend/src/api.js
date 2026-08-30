@@ -13,13 +13,38 @@ export function listNotes() {
   return fetchJSON("/notes/");
 }
 
-export function searchNotes({ q = "", page = 1, pageSize = 10, sort = "created_desc" } = {}) {
+export function searchNotes({ q = "", tag = "", page = 1, pageSize = 10, sort = "created_desc" } = {}) {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
+  if (tag) params.set("tag", tag);
   params.set("page", String(page));
   params.set("page_size", String(pageSize));
   params.set("sort", sort);
   return fetchJSON(`/notes/search/?${params.toString()}`);
+}
+
+export function listTags() {
+  return fetchJSON("/tags");
+}
+
+export function createTag(name) {
+  return fetchJSON("/tags", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function attachTagToNote(noteId, name) {
+  return fetchJSON(`/notes/${noteId}/tags`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function detachTagFromNote(noteId, tagId) {
+  return fetchJSON(`/notes/${noteId}/tags/${tagId}`, { method: "DELETE" });
 }
 
 export function getNote(id) {

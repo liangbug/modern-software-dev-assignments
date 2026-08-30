@@ -1,18 +1,15 @@
 # API Reference
 
 ## Route Deltas
-- Changed: `NoteCreate` schema now validates `title` (length 1-200) and `content` (length 1-5000); requests outside these bounds return `422`. Applies to `POST /notes/` and `PUT /notes/{note_id}`.
-- Changed: `GET /action-items/` now accepts an optional `completed` (boolean) query param to filter by completion status.
-- Added: `POST /action-items/bulk-complete` — marks multiple action items completed in a single transaction; rolls back entirely (no partial completion) if any id does not exist.
+- Added: `Tag` model and `note_tags` many-to-many association between `Note` and `Tag`.
+- Added: `GET /tags`, `POST /tags` (get-or-create by name, case-insensitive), `DELETE /tags/{tag_id}`.
+- Added: `POST /notes/{note_id}/tags` — attach a tag to a note (creating it if needed; idempotent, no duplicate association).
+- Added: `DELETE /notes/{note_id}/tags/{tag_id}` — detach a tag from a note.
+- Changed: `NoteRead` now includes a `tags` field (`TagRead[]`, default `[]`).
+- Changed: `GET /notes/` and `GET /notes/search/` now accept an optional `tag` (string) query param to filter notes by tag name (case-insensitive).
+- Changed: `POST /notes/` and `PUT /notes/{note_id}` now parse `#hashtag`s out of `content` and auto-create/attach matching tags (deduped case-insensitively; existing tags are reused, not duplicated).
 
 Generated from the running app's `/openapi.json` (FastAPI title: "Modern Software Dev Starter (Week 5)", version `0.1.0`).
-
-## Route Deltas
-- Changed: `GET /notes/search/` — now supports pagination and sorting.
-  - Added query params: `page` (integer, default `1`), `page_size` (integer, default `10`), `sort` (string, default `created_desc`; also accepts `title_asc`).
-  - Response shape changed from an array of `NoteRead` to `NoteSearchResult` — `{ items: NoteRead[], total: number, page: number, page_size: number }`.
-  - `q` matching is now case-insensitive over `title`/`content`.
-- Added: `NoteSearchResult` schema.
 
 ## root
 ### GET /
@@ -21,18 +18,20 @@ Returns the built frontend's `index.html` (`frontend/dist/index.html`).
 ## notes
 ### GET /notes/
 List all notes.
+- Query params: `tag` (string, optional) — filter to notes tagged with this name (case-insensitive)
 - Response `200`: array of `NoteRead`
 
 ### POST /notes/
-Create a note.
+Create a note. Any `#hashtag`s found in `content` are auto-created/reused and attached to the note.
 - Body: `NoteCreate` — `{ "title": string, "content": string }`
 - Response `201`: `NoteRead`
 - Response `422`: validation error
 
 ### GET /notes/search/
-Search notes by title/content, case-insensitive substring match, with pagination and sorting.
+Search notes by title/content, case-insensitive substring match, with pagination, sorting, and tag filtering.
 - Query params:
   - `q` (string, optional) — keyword matched case-insensitively against `title`/`content`
+  - `tag` (string, optional) — filter to notes tagged with this name (case-insensitive)
   - `page` (integer, optional, default `1`)
   - `page_size` (integer, optional, default `10`)
   - `sort` (string, optional, default `created_desc`) — `created_desc` or `title_asc`
@@ -46,7 +45,7 @@ Get a single note by id.
 - Response `422`: validation error (404 raised at runtime if not found)
 
 ### PUT /notes/{note_id}
-Update a note's title/content.
+Update a note's title/content. Any `#hashtag`s found in the new `content` are auto-created/reused and attached to the note (existing tags are kept).
 - Path params: `note_id` (integer)
 - Body: `NoteCreate` — `{ "title": string, "content": string }`
 - Response `200`: `NoteRead`
@@ -57,6 +56,37 @@ Delete a note.
 - Path params: `note_id` (integer)
 - Response `204`: no content
 - Response `422`: validation error (404 raised at runtime if not found)
+
+## tags
+### GET /tags
+List all tags, sorted by name.
+- Response `200`: array of `TagRead`
+
+### POST /tags
+Create a tag, or return the existing tag if one with the same name (case-insensitive) already exists.
+- Body: `TagCreate` — `{ "name": string }`
+- Response `201`: `TagRead`
+- Response `422`: validation error
+
+### DELETE /tags/{tag_id}
+Delete a tag entirely (removes it from any notes it was attached to).
+- Path params: `tag_id` (integer)
+- Response `204`: no content
+- Response `404`: tag not found
+
+### POST /notes/{note_id}/tags
+Attach a tag to a note by name, creating the tag if it doesn't already exist. Idempotent — attaching an already-attached tag does not create a duplicate association.
+- Path params: `note_id` (integer)
+- Body: `TagCreate` — `{ "name": string }`
+- Response `201`: `NoteRead` (including updated `tags`)
+- Response `404`: note not found
+- Response `422`: validation error
+
+### DELETE /notes/{note_id}/tags/{tag_id}
+Detach a tag from a note (the tag itself is not deleted).
+- Path params: `note_id` (integer), `tag_id` (integer)
+- Response `200`: `NoteRead` (including updated `tags`)
+- Response `404`: note not found, or tag not attached to note
 
 ## action_items
 ### GET /action-items/
@@ -91,12 +121,22 @@ Mark an action item as completed.
 
 ### NoteRead
 ```json
-{ "id": 0, "title": "string", "content": "string" }
+{ "id": 0, "title": "string", "content": "string", "tags": [{ "id": 0, "name": "string" }] }
 ```
 
 ### NoteSearchResult
 ```json
-{ "items": [{ "id": 0, "title": "string", "content": "string" }], "total": 0, "page": 1, "page_size": 10 }
+{ "items": [{ "id": 0, "title": "string", "content": "string", "tags": [] }], "total": 0, "page": 1, "page_size": 10 }
+```
+
+### TagCreate
+```json
+{ "name": "string (1-100 chars)" }
+```
+
+### TagRead
+```json
+{ "id": 0, "name": "string" }
 ```
 
 ### ActionItemCreate

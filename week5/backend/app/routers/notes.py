@@ -3,15 +3,20 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Note
+from ..models import Note, Tag
 from ..schemas import NoteCreate, NoteRead, NoteSearchResult
+from ..services.extract import extract_hashtags
+from ..services.tags import sync_note_tags_from_content
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 
 @router.get("/", response_model=list[NoteRead])
-def list_notes(db: Session = Depends(get_db)) -> list[NoteRead]:
-    rows = db.execute(select(Note)).scalars().all()
+def list_notes(tag: str | None = None, db: Session = Depends(get_db)) -> list[NoteRead]:
+    stmt = select(Note)
+    if tag:
+        stmt = stmt.join(Note.tags).where(Tag.name.ilike(tag))
+    rows = db.execute(stmt).scalars().unique().all()
     return [NoteRead.model_validate(row) for row in rows]
 
 
@@ -20,6 +25,8 @@ def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
     note = Note(title=payload.title, content=payload.content)
     db.add(note)
     db.flush()
+    sync_note_tags_from_content(db, note, extract_hashtags(payload.content))
+    db.flush()
     db.refresh(note)
     return NoteRead.model_validate(note)
 
@@ -27,6 +34,7 @@ def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
 @router.get("/search/", response_model=NoteSearchResult)
 def search_notes(
     q: str | None = None,
+    tag: str | None = None,
     page: int = 1,
     page_size: int = 10,
     sort: str = "created_desc",
@@ -44,6 +52,9 @@ def search_notes(
 
     count_query = select(func.count()).select_from(Note)
     items_query = select(Note)
+    if tag:
+        count_query = count_query.join(Note.tags).where(Tag.name.ilike(tag))
+        items_query = items_query.join(Note.tags).where(Tag.name.ilike(tag))
     for condition in filters:
         count_query = count_query.where(condition)
         items_query = items_query.where(condition)
@@ -84,6 +95,8 @@ def update_note(note_id: int, payload: NoteCreate, db: Session = Depends(get_db)
     note.title = payload.title
     note.content = payload.content
     db.add(note)
+    db.flush()
+    sync_note_tags_from_content(db, note, extract_hashtags(payload.content))
     db.flush()
     db.refresh(note)
     return NoteRead.model_validate(note)
