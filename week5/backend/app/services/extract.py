@@ -1,11 +1,27 @@
 import re
 
 _HASHTAG_PATTERN = re.compile(r"#(\w+)")
+_CHECKBOX_PATTERN = re.compile(r"^\[\s?\]\s*(.+)$")
 
 
 def extract_action_items(text: str) -> list[str]:
+    """Extract action items from text.
+
+    Recognizes two line formats:
+    - Checkbox tasks: "- [ ] task text" -> "task text"
+    - Legacy markers: lines ending in "!" or starting with "todo:"
+    """
     lines = [line.strip("- ") for line in text.splitlines() if line.strip()]
-    return [line for line in lines if line.endswith("!") or line.lower().startswith("todo:")]
+    items: list[str] = []
+    for line in lines:
+        checkbox_match = _CHECKBOX_PATTERN.match(line)
+        if checkbox_match:
+            task_text = checkbox_match.group(1).strip()
+            if task_text:
+                items.append(task_text)
+        elif line.endswith("!") or line.lower().startswith("todo:"):
+            items.append(line)
+    return items
 
 
 def extract_hashtags(text: str) -> list[str]:

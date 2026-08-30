@@ -1,6 +1,9 @@
 # API Reference
 
 ## Route Deltas
+- Added: `POST /notes/{note_id}/extract` — parse `#hashtag`s and action items (`- [ ] task text` checkboxes, plus legacy `TODO:`/`!` markers) out of a note's `content`. Returns the parsed result without writing to the DB unless `apply=true`.
+- Added: `NoteExtractResult` schema — `{ tags: string[], action_items: string[] }`.
+- Changed: `extract_action_items` now also recognizes `- [ ] task text` checkbox lines (returning the task text), in addition to the existing `TODO:`/trailing-`!` markers.
 - Added: `Tag` model and `note_tags` many-to-many association between `Note` and `Tag`.
 - Added: `GET /tags`, `POST /tags` (get-or-create by name, case-insensitive), `DELETE /tags/{tag_id}`.
 - Added: `POST /notes/{note_id}/tags` — attach a tag to a note (creating it if needed; idempotent, no duplicate association).
@@ -56,6 +59,13 @@ Delete a note.
 - Path params: `note_id` (integer)
 - Response `204`: no content
 - Response `422`: validation error (404 raised at runtime if not found)
+
+### POST /notes/{note_id}/extract
+Parse `#hashtag`s and action items out of the note's `content` without modifying it. Action items are recognized from `- [ ] task text` checkbox lines as well as legacy `TODO:`/trailing-`!` markers. When `apply=true`, the parsed tags are attached to the note (via the same get-or-create/dedupe logic as note creation) and each parsed action item is persisted as a new `ActionItem` row; when omitted or `false`, nothing is written to the DB.
+- Path params: `note_id` (integer)
+- Query params: `apply` (boolean, optional, default `false`)
+- Response `200`: `NoteExtractResult`
+- Response `404`: note not found
 
 ## tags
 ### GET /tags
@@ -152,4 +162,9 @@ Mark an action item as completed.
 ### BulkCompleteRequest
 ```json
 { "ids": [0] }
+```
+
+### NoteExtractResult
+```json
+{ "tags": ["string"], "action_items": ["string"] }
 ```

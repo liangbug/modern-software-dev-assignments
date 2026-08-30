@@ -35,6 +35,11 @@ class NoteSearchResult(BaseModel):
     page_size: int
 
 
+class NoteExtractResult(BaseModel):
+    tags: list[str]
+    action_items: list[str]
+
+
 class ActionItemCreate(BaseModel):
     description: str
 

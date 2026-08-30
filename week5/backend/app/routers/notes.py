@@ -3,9 +3,9 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Note, Tag
-from ..schemas import NoteCreate, NoteRead, NoteSearchResult
-from ..services.extract import extract_hashtags
+from ..models import ActionItem, Note, Tag
+from ..schemas import NoteCreate, NoteExtractResult, NoteRead, NoteSearchResult
+from ..services.extract import extract_action_items, extract_hashtags
 from ..services.tags import sync_note_tags_from_content
 
 router = APIRouter(prefix="/notes", tags=["notes"])
@@ -109,3 +109,23 @@ def delete_note(note_id: int, db: Session = Depends(get_db)) -> None:
         raise HTTPException(status_code=404, detail="Note not found")
     db.delete(note)
     db.flush()
+
+
+@router.post("/{note_id}/extract", response_model=NoteExtractResult)
+def extract_note(
+    note_id: int, apply: bool = False, db: Session = Depends(get_db)
+) -> NoteExtractResult:
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    tags = extract_hashtags(note.content)
+    action_items = extract_action_items(note.content)
+
+    if apply:
+        sync_note_tags_from_content(db, note, tags)
+        for description in action_items:
+            db.add(ActionItem(description=description, completed=False))
+        db.flush()
+
+    return NoteExtractResult(tags=tags, action_items=action_items)
