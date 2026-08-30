@@ -1,4 +1,11 @@
-async function fetchJSON(url, options) {
+// When frontend and backend are deployed separately (Vercel Option A/B),
+// VITE_API_BASE_URL points at the API origin; same-origin deployments (the
+// FastAPI app serving this bundle directly) leave it unset and paths stay
+// relative.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+async function fetchJSON(path, options) {
+  const url = `${API_BASE_URL}${path}`;
   const res = await fetch(url, options);
   if (!res.ok) {
     throw new Error(await res.text());

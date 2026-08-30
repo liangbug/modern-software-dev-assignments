@@ -61,6 +61,12 @@ def test_delete_note_not_found(client):
     assert r.status_code == 404
 
 
+def test_get_note_not_found(client):
+    r = client.get("/notes/999999")
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "NOT_FOUND"
+
+
 def test_create_note_validation_error_empty_title(client):
     r = client.post("/notes/", json={"title": "", "content": "Valid content"})
     assert r.status_code == 422

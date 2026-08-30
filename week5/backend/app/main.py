@@ -1,9 +1,11 @@
 import http
 import json
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -92,6 +94,19 @@ class ResponseEnvelopeMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(ResponseEnvelopeMiddleware)
+
+# Allow the deployed Vercel frontend (or any other origin) to call this API
+# cross-origin when frontend/backend are deployed separately (see Option B in
+# README.md). Same-origin deployment (frontend served by this same app) needs
+# no CORS at all, so this stays a no-op unless ALLOWED_ORIGIN is set.
+_allowed_origin = os.getenv("ALLOWED_ORIGIN")
+if _allowed_origin:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[_allowed_origin],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Ensure data dir exists
 Path("data").mkdir(parents=True, exist_ok=True)

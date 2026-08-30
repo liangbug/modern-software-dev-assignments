@@ -109,6 +109,44 @@ def test_list_action_items_page_size_exceeds_total(client):
     assert len(data["items"]) == 3
 
 
+def test_create_action_item_validation_error_empty_description(client):
+    r = client.post("/action-items/", json={"description": ""})
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_complete_action_item_not_found(client):
+    r = client.put("/action-items/999999/complete")
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "NOT_FOUND"
+
+
+def test_bulk_complete_concurrent_disjoint_batches_are_consistent(client):
+    import concurrent.futures
+
+    batch_a = []
+    batch_b = []
+    for i in range(10):
+        r = client.post("/action-items/", json={"description": f"A{i}"})
+        batch_a.append(r.json()["data"]["id"])
+    for i in range(10):
+        r = client.post("/action-items/", json={"description": f"B{i}"})
+        batch_b.append(r.json()["data"]["id"])
+
+    def complete(ids):
+        return client.post("/action-items/bulk-complete", json={"ids": ids})
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(complete, batch_a), pool.submit(complete, batch_b)]
+        results = [f.result() for f in futures]
+
+    assert all(r.status_code == 200 for r in results)
+
+    r = client.get("/action-items/", params={"completed": "true", "page_size": 50})
+    completed_ids = {item["id"] for item in r.json()["data"]["items"]}
+    assert completed_ids == set(batch_a) | set(batch_b)
+
+
 def test_list_action_items_page_out_of_range_returns_empty_items(client):
     for i in range(3):
         client.post("/action-items/", json={"description": f"Task {i}"})

@@ -8,17 +8,27 @@ from backend.app.main import app
 from backend.app.models import Base
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 
 @pytest.fixture()
-def client() -> Generator[TestClient, None, None]:
+def _test_db():
     db_fd, db_path = tempfile.mkstemp()
     os.close(db_fd)
 
     engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(bind=engine)
+
+    yield engine, TestingSessionLocal
+
+    engine.dispose()
+    os.unlink(db_path)
+
+
+@pytest.fixture()
+def client(_test_db) -> Generator[TestClient, None, None]:
+    _, TestingSessionLocal = _test_db
 
     def override_get_db():
         session = TestingSessionLocal()
@@ -36,5 +46,14 @@ def client() -> Generator[TestClient, None, None]:
     with TestClient(app) as c:
         yield c
 
-    engine.dispose()
-    os.unlink(db_path)
+    app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.fixture()
+def db_session(_test_db) -> Generator[Session, None, None]:
+    _, TestingSessionLocal = _test_db
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()

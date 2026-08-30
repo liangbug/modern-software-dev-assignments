@@ -1,3 +1,15 @@
+def test_create_tag_validation_error_empty_name(client):
+    r = client.post("/tags", json={"name": ""})
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_attach_tag_to_note_not_found(client):
+    r = client.post("/notes/999999/tags", json={"name": "x"})
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "NOT_FOUND"
+
+
 def test_create_note_with_hashtags_auto_creates_and_attaches_tags(client):
     payload = {"title": "Groceries", "content": "Buy milk #shopping #home"}
     r = client.post("/notes/", json=payload)

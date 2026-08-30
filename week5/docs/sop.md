@@ -309,6 +309,66 @@ page（預設1）、page_size（預設10）query參數。
 ```
 **檢查重點**：回傳格式從list變成`{items, total}`，若任務7也做了要再包一層`data`；建議先做任務7再做任務8。
 
+### 任務9 — 查詢效能與索引（easy-medium）
+**涉及檔案**：`backend/app/models.py`、`backend/tests/test_performance.py`（新檔案）
+
+**Prompt**：
+```
+在 backend/app/models.py 加SQLite索引：
+- Note.title 加 index=True（/notes/search 的 title_asc 排序、比對用得到）
+- note_tags 關聯表對 tag_id 額外加 Index（複合PK只覆蓋note_id方向，
+  依tag篩筆記的反向查詢需要單獨索引）
+新增 backend/tests/test_performance.py：
+- seed較大資料集（如300筆notes），驗證分頁/排序/依tag篩選結果仍正確
+- 用 EXPLAIN QUERY PLAN 驗證上述索引真的被用到（SQL文字含索引名）
+完成後執行 week5-test-runner，再跑 week5-docs-sync。
+```
+**檢查重點**：`data/app.db`是舊schema建的，加索引不會自動套用到既有DB檔（`create_all`不會改已存在的table），本地驗證前先刪掉`data/app.db`讓它重建。
+
+### 任務10 — 測試覆蓋率補強（easy）
+**涉及檔案**：`backend/tests/test_notes.py`、`test_action_items.py`、`test_tags.py`
+
+**Prompt**：
+```
+盤點現有測試，補齊每個端點缺的情境：
+- GET /notes/{id} 找不到（404）
+- POST /action-items 空description（422）
+- PUT /action-items/{id}/complete 找不到（404）
+- POST /tags 空name（422）
+- POST /notes/{id}/tags 對不存在的note（404）
+- 批量操作的並行/交易行為：用ThreadPoolExecutor同時送兩批不重疊id的
+  bulk-complete請求，驗證兩批都正確完成、互不干擾
+完成後執行 week5-test-runner，全部通過。
+```
+**檢查重點**：前端search/pagination/optimistic update整合測試在任務1、3、8時已經補齊（`NotesSection.test.jsx`），這裡只需補後端端點測試缺口。
+
+### 任務11 — 部署到 Vercel（medium-complex）
+**涉及檔案**：新增`week5/api/index.py`、`week5/vercel.json`、`week5/requirements.txt`；修改`backend/app/main.py`、`frontend/src/api.js`、`README.md`
+
+**Prompt**：
+```
+讓week5可以部署到Vercel：
+- 新增 week5/api/index.py，import backend/app/main.py 的 app，
+  給 @vercel/python serverless function用
+- 新增 week5/requirements.txt（fastapi、sqlalchemy、pydantic、
+  python-dotenv），function的依賴用這份
+- 新增 week5/vercel.json：buildCommand跑frontend的npm build，
+  outputDirectory指到frontend/dist，rewrite /api/* 到api/index.py，
+  其他路徑serve前端build
+- frontend/src/api.js 所有fetch呼叫的路徑前綴改讀
+  import.meta.env.VITE_API_BASE_URL（沒設就維持原本relative path，
+  同源部署不受影響）
+- backend/app/main.py 加CORSMiddleware，但只在環境變數ALLOWED_ORIGIN
+  有設定時才加（同源部署時完全不啟用，前後端分開部署時才需要）
+- README.md補一段部署guide：Vercel專案設定、環境變數、
+  Option A（前後端都在Vercel，api/走serverless function）、
+  Option B（後端另外部署到Fly.io/Render，前端在Vercel透過
+  VITE_API_BASE_URL連外部API）、rollback方式
+完成後執行 week5-test-runner（確認api.js改動沒讓現有前端測試斷言的
+fetch URL斷掉），再跑 week5-docs-sync。
+```
+**檢查重點**：`api.js`的fetch URL加了base prefix後，前端測試mock裡斷言的URL字串（如`"/notes/search/?..."`）在測試環境`VITE_API_BASE_URL`未設時要維持原樣，跑一次`npm run test`確認沒斷。
+
 ---
 
 ## Step 3 — 用 git worktree + 多tab 平行跑（滿足要求 B）
