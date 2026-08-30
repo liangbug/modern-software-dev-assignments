@@ -106,31 +106,64 @@ Prompt content:
 ```
 存檔後點 **Share**，複製連結。
 
-### 1e. Rule（範圍設 `week5/`），命名 `week5-repo-rules`
-```
-Title: week5-repo-rules
-Description: 這個repo的agent行為準則，套用在week5/資料夾範圍內的所有對話。
+### 1e. Rule — 用 `week5/AGENTS.md`
 
-Content:
-這是 FastAPI + SQLAlchemy + SQLite 的 week5 專案。
-- 路由放在 backend/app/routers/，schema放在 backend/app/schemas.py，
-  model放在 backend/app/models.py。
-- 每次改完程式碼一定要跑 week5-test-runner 確認過，不要只憑肉眼判斷。
-- 新增/修改 API 行為時同步更新 backend/tests/ 對應測試，並在完成後跑一次
-  week5-docs-sync 讓 docs/API.md 保持同步。
-- 若要調整檔案結構或重新命名，改用 week5-refactor-harness 而不是手動改。
-- 保持現有 response_model 風格與既有命名慣例一致。
+Warp的Rule scope是靠檔案位置決定的：在 `week5/` 資料夾放一個 `AGENTS.md`（或`WARP.md`，兩者
+Warp都認）檔案，Warp偵測到工作目錄cd進 `week5/` 就會自動套用這份rule，不需要另外在UI裡設定
+「套用範圍」。這個repo已經有 `week5/AGENTS.md`（見下方），內容涵蓋tech stack、code architecture、
+何時該用哪個saved prompt、Always/Never Do規則，不用再重建：
+
+```markdown
+# week5-repo-rules
+
+## Tech Stack
+- Backend: FastAPI
+- ORM: SQLAlchemy
+- Database: SQLite
+
+## Code Architecture
+- Routers (路由): backend/app/routers/
+- Schemas (結構): backend/app/schemas.py
+- Models (模型): backend/app/models.py
+
+## Commands
+- Test runner (測試): week5-test-runner
+- Docs sync (文檔同步): week5-docs-sync
+- Refactor tool (重構工具): week5-refactor-harness
+
+## Rules & Boundaries
+
+### Always Do
+- 改完程式碼後，必須執行 week5-test-runner 進行自動測試確認，不可僅憑肉眼判斷。
+- 新增或修改 API 行為時，必須同步更新 backend/tests/ 中對應的測試，並在完成後執行
+  week5-docs-sync 以保持 docs/API.md 的即時同步。
+- 保持現有的 response_model 風格，並與既有的程式碼命名慣例完全一致。
+
+### Never Do
+- 調整檔案結構或重新命名時，禁止手動修改，必須改用 week5-refactor-harness 來進行。
 ```
-存檔後點 **Share**，複製連結。
+這份檔案本身就是可分享的素材（連同其他saved prompt定義一起放進 `week5/writeup.md`），
+不需要另外去Warp Drive UI建立rule物件。若之後新增 `week5-release-helper` 的使用規則，
+直接編輯這份 `AGENTS.md` 補上即可。
 
 ### 1f.（可選加分）Git MCP Server（對應「Integrate the Git MCP server」）
 `Settings → AI → MCP Servers` 加Git MCP（依該MCP repo的command/args設定），讓agent能自主：
+```
+{
+  "git": {
+    "args": [
+      "mcp-server-git"
+    ],
+    "command": "uvx"
+  }
+}
+```
 - 依任務名稱開branch（如 `git checkout -b task4-bulk-complete`）
 - commit（訊息用 conventional commits格式）
 - 產出PR note草稿（列出這次變更摘要）
 設定完成後截圖存進writeup，並在一次任務中實際請agent透過MCP開branch+commit驗證有效。
 
-> 每個任務開新agent對話，先講「套用 week5-repo-rules」，過程中依需要呼叫 `week5-test-runner`、`week5-refactor-harness`，收尾呼叫 `week5-docs-sync` 和 `week5-release-helper`。這5個Warp Drive素材（4個saved prompt+1個rule，MCP可選）share link/exported定義全部貼進 `week5/writeup.md`。
+> `week5/AGENTS.md`只要工作目錄cd進`week5/`就自動生效，不用手動套用。要跑某個saved prompt時，在agent對話框打 `/` 叫出Slash Commands選單，輸入prompt名字（如`week5-test-runner`）篩選後選取執行，不是打字當一般文字送出。這4個saved prompt（`week5-test-runner`、`week5-docs-sync`、`week5-refactor-harness`、`week5-release-helper`）＋`week5/AGENTS.md`＋（可選）Git MCP，share link/exported定義全部貼進 `week5/writeup.md`。
 
 ---
 
@@ -147,7 +180,6 @@ git add -A && git commit -m "feat(week5): <任務名稱>"
 
 **Prompt**：
 ```
-[套用 week5-repo-rules]
 在 week5/frontend/ 下用 Vite + React 建新前端，取代現有純HTML/CSS/JS。
 - build產出到 week5/frontend/dist/
 - 串接現有API: GET/POST /notes、GET /notes/{id}、GET /notes/search/、
@@ -168,7 +200,6 @@ git add -A && git commit -m "feat(week5): <任務名稱>"
 
 **Prompt**：
 ```
-[套用 week5-repo-rules]
 在 backend/app/routers/notes.py 實作 GET /notes/search，支援：
 - q: 關鍵字（title/content不分大小寫比對）
 - page、page_size（預設page=1, page_size=10）
@@ -186,7 +217,6 @@ filter/order_by/limit/offset。
 
 **Prompt**：
 ```
-[套用 week5-repo-rules]
 在 backend/app/routers/notes.py 加：
 - PUT /notes/{id}：更新title/content
 - DELETE /notes/{id}：刪除，找不到回404
@@ -203,7 +233,6 @@ filter/order_by/limit/offset。
 
 **Prompt**：
 ```
-[套用 week5-repo-rules]
 在 backend/app/routers/action_items.py：
 - GET /action-items 加 completed: bool | None 篩選參數
 - 新增 POST /action-items/bulk-complete，body { ids: [int,...] }，
@@ -219,7 +248,6 @@ filter/order_by/limit/offset。
 
 **Prompt**：
 ```
-[套用 week5-repo-rules]
 在 backend/app/models.py 加Tag model和note_tags多對多關聯表（Note<->Tag）。
 新增 backend/app/routers/tags.py：
 - GET /tags、POST /tags、DELETE /tags/{id}
@@ -238,7 +266,6 @@ filter/order_by/limit/offset。
 
 **Prompt**：
 ```
-[套用 week5-repo-rules]
 擴充 backend/app/services/extract.py 的 extract_action_items：
 - 解析文字中的#hashtags -> 回傳tag清單
 - 解析"- [ ] task text"格式的行 -> 回傳action item清單
@@ -256,7 +283,6 @@ filter/order_by/limit/offset。
 
 **Prompt**：
 ```
-[套用 week5-repo-rules]
 在 backend/app/main.py 加全域exception handler：
 - HTTPException -> { "ok": false, "error": { "code": "...", "message": "..." } }
 - RequestValidationError（422） -> { "ok": false, "error": { "code": "VALIDATION_ERROR", "message": "..." } }
@@ -272,7 +298,6 @@ filter/order_by/limit/offset。
 
 **Prompt**：
 ```
-[套用 week5-repo-rules]
 在 backend/app/routers/notes.py 的 GET /notes 和
 backend/app/routers/action_items.py 的 GET /action-items 加
 page（預設1）、page_size（預設10）query參數。
