@@ -7,8 +7,9 @@ def test_create_and_list_notes(client):
 
     r = client.get("/notes/")
     assert r.status_code == 200
-    items = r.json()["data"]
-    assert len(items) >= 1
+    data = r.json()["data"]
+    assert set(data.keys()) == {"items", "total"}
+    assert len(data["items"]) >= 1
 
     r = client.get("/notes/search/")
     assert r.status_code == 200
@@ -84,3 +85,43 @@ def test_update_note_validation_error(client):
 
     r = client.put(f"/notes/{note_id}", json={"title": "", "content": "Y"})
     assert r.status_code == 422
+
+
+def test_list_notes_empty(client):
+    r = client.get("/notes/")
+    assert r.status_code == 200
+    data = r.json()["data"]
+    assert data == {"items": [], "total": 0}
+
+
+def test_list_notes_pagination_last_page_partial(client):
+    for i in range(15):
+        client.post("/notes/", json={"title": f"Note {i}", "content": "Body"})
+
+    r = client.get("/notes/", params={"page": 2, "page_size": 10})
+    assert r.status_code == 200
+    data = r.json()["data"]
+    assert data["total"] == 15
+    assert len(data["items"]) == 5
+
+
+def test_list_notes_page_size_exceeds_total(client):
+    for i in range(3):
+        client.post("/notes/", json={"title": f"Note {i}", "content": "Body"})
+
+    r = client.get("/notes/", params={"page": 1, "page_size": 50})
+    assert r.status_code == 200
+    data = r.json()["data"]
+    assert data["total"] == 3
+    assert len(data["items"]) == 3
+
+
+def test_list_notes_page_out_of_range_returns_empty_items(client):
+    for i in range(3):
+        client.post("/notes/", json={"title": f"Note {i}", "content": "Body"})
+
+    r = client.get("/notes/", params={"page": 5, "page_size": 10})
+    assert r.status_code == 200
+    data = r.json()["data"]
+    assert data["total"] == 3
+    assert data["items"] == []

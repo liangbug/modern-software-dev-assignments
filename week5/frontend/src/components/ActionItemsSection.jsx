@@ -6,6 +6,8 @@ import {
   listActionItems,
 } from "../api.js";
 
+const PAGE_SIZE = 10;
+
 const FILTERS = {
   all: { label: "全部", completed: undefined },
   completed: { label: "已完成", completed: true },
@@ -14,23 +16,31 @@ const FILTERS = {
 
 export default function ActionItemsSection() {
   const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [description, setDescription] = useState("");
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState([]);
 
-  async function refresh(currentFilter = filter) {
+  async function refresh(currentFilter = filter, targetPage = page) {
     try {
-      const data = await listActionItems({ completed: FILTERS[currentFilter].completed });
-      setItems(data);
-      setSelectedIds((prev) => prev.filter((id) => data.some((item) => item.id === id)));
+      const data = await listActionItems({
+        completed: FILTERS[currentFilter].completed,
+        page: targetPage,
+        pageSize: PAGE_SIZE,
+      });
+      setItems(data.items);
+      setTotal(data.total);
+      setPage(targetPage);
+      setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.id === id)));
     } catch (err) {
       setError(err.message);
     }
   }
 
   useEffect(() => {
-    refresh(filter);
+    refresh(filter, 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
@@ -39,7 +49,7 @@ export default function ActionItemsSection() {
     try {
       await createActionItem({ description });
       setDescription("");
-      await refresh();
+      await refresh(filter, 1);
     } catch (err) {
       setError(err.message);
     }
@@ -48,7 +58,7 @@ export default function ActionItemsSection() {
   async function handleComplete(id) {
     try {
       await completeActionItem(id);
-      await refresh();
+      await refresh(filter, page);
     } catch (err) {
       setError(err.message);
     }
@@ -64,11 +74,25 @@ export default function ActionItemsSection() {
     try {
       await bulkCompleteActionItems(selectedIds);
       setSelectedIds([]);
-      await refresh();
+      await refresh(filter, page);
     } catch (err) {
       setError(err.message);
     }
   }
+
+  async function handlePrev() {
+    if (page > 1) {
+      await refresh(filter, page - 1);
+    }
+  }
+
+  async function handleNext() {
+    if (page * PAGE_SIZE < total) {
+      await refresh(filter, page + 1);
+    }
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <section>
@@ -104,6 +128,9 @@ export default function ActionItemsSection() {
       >
         Complete Selected
       </button>
+      <p>
+        共 {total} 筆結果，第 {page} / {totalPages} 頁
+      </p>
       <ul>
         {items.map((a) => (
           <li key={a.id}>
@@ -119,6 +146,14 @@ export default function ActionItemsSection() {
           </li>
         ))}
       </ul>
+      <div>
+        <button onClick={handlePrev} disabled={page <= 1}>
+          上一頁
+        </button>
+        <button onClick={handleNext} disabled={page * PAGE_SIZE >= total}>
+          下一頁
+        </button>
+      </div>
     </section>
   );
 }

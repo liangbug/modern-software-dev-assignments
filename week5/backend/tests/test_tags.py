@@ -97,7 +97,7 @@ def test_filter_notes_by_tag(client):
 
     r = client.get("/notes/", params={"tag": "python"})
     assert r.status_code == 200
-    titles = {n["title"] for n in r.json()["data"]}
+    titles = {n["title"] for n in r.json()["data"]["items"]}
     assert titles == {"A", "C"}
 
     r = client.get("/notes/search/", params={"tag": "golang"})

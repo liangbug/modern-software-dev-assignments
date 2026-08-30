@@ -28,6 +28,11 @@ class NoteRead(BaseModel):
         from_attributes = True
 
 
+class NoteListResult(BaseModel):
+    items: list[NoteRead]
+    total: int
+
+
 class NoteSearchResult(BaseModel):
     items: list[NoteRead]
     total: int
@@ -51,6 +56,11 @@ class ActionItemRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ActionItemListResult(BaseModel):
+    items: list[ActionItemRead]
+    total: int
 
 
 class BulkCompleteRequest(BaseModel):

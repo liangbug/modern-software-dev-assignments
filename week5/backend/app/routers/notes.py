@@ -4,20 +4,42 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import ActionItem, Note, Tag
-from ..schemas import NoteCreate, NoteExtractResult, NoteRead, NoteSearchResult
+from ..schemas import (
+    NoteCreate,
+    NoteExtractResult,
+    NoteListResult,
+    NoteRead,
+    NoteSearchResult,
+)
 from ..services.extract import extract_action_items, extract_hashtags
 from ..services.tags import sync_note_tags_from_content
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 
-@router.get("/", response_model=list[NoteRead])
-def list_notes(tag: str | None = None, db: Session = Depends(get_db)) -> list[NoteRead]:
-    stmt = select(Note)
+@router.get("/", response_model=NoteListResult)
+def list_notes(
+    tag: str | None = None,
+    page: int = 1,
+    page_size: int = 10,
+    db: Session = Depends(get_db),
+) -> NoteListResult:
+    page = max(page, 1)
+    page_size = max(page_size, 1)
+
+    count_query = select(func.count()).select_from(Note)
+    items_query = select(Note)
     if tag:
-        stmt = stmt.join(Note.tags).where(Tag.name.ilike(tag))
-    rows = db.execute(stmt).scalars().unique().all()
-    return [NoteRead.model_validate(row) for row in rows]
+        count_query = count_query.join(Note.tags).where(Tag.name.ilike(tag))
+        items_query = items_query.join(Note.tags).where(Tag.name.ilike(tag))
+
+    total = db.execute(count_query).scalar_one()
+
+    items_query = items_query.order_by(Note.id.desc())
+    items_query = items_query.limit(page_size).offset((page - 1) * page_size)
+    rows = db.execute(items_query).scalars().unique().all()
+
+    return NoteListResult(items=[NoteRead.model_validate(row) for row in rows], total=total)
 
 
 @router.post("/", response_model=NoteRead, status_code=201)

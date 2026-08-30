@@ -1,6 +1,9 @@
 # API Reference
 
 ## Route Deltas
+- Changed: `GET /notes/` now accepts `page` (default `1`) and `page_size` (default `10`) query params and returns `{ "ok": true, "data": NoteListResult }` (`{ items: NoteRead[], total: number }`) instead of a bare `NoteRead[]` array. Implemented with SQLAlchemy `limit`/`offset`.
+- Changed: `GET /action-items/` now accepts `page` (default `1`) and `page_size` (default `10`) query params and returns `{ "ok": true, "data": ActionItemListResult }` (`{ items: ActionItemRead[], total: number }`) instead of a bare `ActionItemRead[]` array. Implemented with SQLAlchemy `limit`/`offset`.
+- Added: `ActionItemListResult` and `NoteListResult` schemas — `{ items: [...], total: number }`.
 - Changed: all successful JSON responses are now wrapped as `{ "ok": true, "data": <original response body> }`. `204 No Content` responses are unchanged (no body).
 - Added: global exception handlers.
   - `HTTPException` (e.g. `404 Not Found`) now returns `{ "ok": false, "error": { "code": "<HTTP_STATUS_PHRASE>", "message": "<detail>" } }` (e.g. `code: "NOT_FOUND"`).
@@ -34,9 +37,12 @@ Returns the built frontend's `index.html` (`frontend/dist/index.html`). Not wrap
 
 ## notes
 ### GET /notes/
-List all notes.
-- Query params: `tag` (string, optional) — filter to notes tagged with this name (case-insensitive)
-- Response `200`: `{ "ok": true, "data": NoteRead[] }`
+List notes with pagination.
+- Query params:
+  - `tag` (string, optional) — filter to notes tagged with this name (case-insensitive)
+  - `page` (integer, optional, default `1`)
+  - `page_size` (integer, optional, default `10`)
+- Response `200`: `{ "ok": true, "data": NoteListResult }`
 
 ### POST /notes/
 Create a note. Any `#hashtag`s found in `content` are auto-created/reused and attached to the note.
@@ -115,9 +121,12 @@ Detach a tag from a note (the tag itself is not deleted).
 
 ## action_items
 ### GET /action-items/
-List action items, optionally filtered by completion status.
-- Query params: `completed` (boolean, optional) — when provided, only returns items matching that completion state
-- Response `200`: `{ "ok": true, "data": ActionItemRead[] }`
+List action items with pagination, optionally filtered by completion status.
+- Query params:
+  - `completed` (boolean, optional) — when provided, only returns items matching that completion state
+  - `page` (integer, optional, default `1`)
+  - `page_size` (integer, optional, default `10`)
+- Response `200`: `{ "ok": true, "data": ActionItemListResult }`
 
 ### POST /action-items/
 Create an action item.
@@ -149,6 +158,11 @@ Mark an action item as completed.
 { "id": 0, "title": "string", "content": "string", "tags": [{ "id": 0, "name": "string" }] }
 ```
 
+### NoteListResult
+```json
+{ "items": [{ "id": 0, "title": "string", "content": "string", "tags": [] }], "total": 0 }
+```
+
 ### NoteSearchResult
 ```json
 { "items": [{ "id": 0, "title": "string", "content": "string", "tags": [] }], "total": 0, "page": 1, "page_size": 10 }
@@ -172,6 +186,11 @@ Mark an action item as completed.
 ### ActionItemRead
 ```json
 { "id": 0, "description": "string", "completed": false }
+```
+
+### ActionItemListResult
+```json
+{ "items": [{ "id": 0, "description": "string", "completed": false }], "total": 0 }
 ```
 
 ### BulkCompleteRequest

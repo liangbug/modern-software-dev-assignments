@@ -9,8 +9,12 @@ async function fetchJSON(url, options) {
   return res.json();
 }
 
-export function listNotes() {
-  return fetchJSON("/notes/");
+export function listNotes({ tag = "", page = 1, pageSize = 10 } = {}) {
+  const params = new URLSearchParams();
+  if (tag) params.set("tag", tag);
+  params.set("page", String(page));
+  params.set("page_size", String(pageSize));
+  return fetchJSON(`/notes/?${params.toString()}`);
 }
 
 export function searchNotes({ q = "", tag = "", page = 1, pageSize = 10, sort = "created_desc" } = {}) {
@@ -71,9 +75,12 @@ export function deleteNote(id) {
   return fetchJSON(`/notes/${id}`, { method: "DELETE" });
 }
 
-export function listActionItems({ completed } = {}) {
-  const params = typeof completed === "boolean" ? `?completed=${completed}` : "";
-  return fetchJSON(`/action-items/${params}`);
+export function listActionItems({ completed, page = 1, pageSize = 10 } = {}) {
+  const params = new URLSearchParams();
+  if (typeof completed === "boolean") params.set("completed", String(completed));
+  params.set("page", String(page));
+  params.set("page_size", String(pageSize));
+  return fetchJSON(`/action-items/?${params.toString()}`);
 }
 
 export function createActionItem({ description }) {

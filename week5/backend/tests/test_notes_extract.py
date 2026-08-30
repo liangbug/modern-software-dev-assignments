@@ -19,7 +19,7 @@ def test_extract_without_apply_does_not_write_action_items(client):
 
     # No action items should have been created since apply was not set.
     r = client.get("/action-items/")
-    assert r.json()["data"] == []
+    assert r.json()["data"]["items"] == []
 
 
 def test_extract_with_apply_true_persists_tags_and_action_items(client):
@@ -42,7 +42,7 @@ def test_extract_with_apply_true_persists_tags_and_action_items(client):
     assert tag_names == {"backend"}
 
     r = client.get("/action-items/")
-    descriptions = {item["description"] for item in r.json()["data"]}
+    descriptions = {item["description"] for item in r.json()["data"]["items"]}
     assert descriptions == {"Write extract endpoint", "Add tests"}
 
 
