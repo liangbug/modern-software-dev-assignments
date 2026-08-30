@@ -1,5 +1,9 @@
 # week5-repo-rules
 
+## Python 環境（重要）
+- `.venv` 只在 repo 根目錄。
+- 一律用 `uv run <cmd>`（在 week5/ 底下執行即可）——uv 會自動往上找到根目錄 pyproject.toml/uv.lock 並解析到正確 venv。
+
 ## Tech Stack
 - Backend: FastAPI
 - ORM: SQLAlchemy
