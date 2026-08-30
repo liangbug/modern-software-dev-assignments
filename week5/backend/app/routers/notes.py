@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import Note
-from ..schemas import NoteCreate, NoteRead
+from ..schemas import NoteCreate, NoteRead, NoteSearchResult
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -24,17 +24,48 @@ def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
     return NoteRead.model_validate(note)
 
 
-@router.get("/search/", response_model=list[NoteRead])
-def search_notes(q: str | None = None, db: Session = Depends(get_db)) -> list[NoteRead]:
-    if not q:
-        rows = db.execute(select(Note)).scalars().all()
-    else:
-        rows = (
-            db.execute(select(Note).where((Note.title.contains(q)) | (Note.content.contains(q))))
-            .scalars()
-            .all()
+@router.get("/search/", response_model=NoteSearchResult)
+def search_notes(
+    q: str | None = None,
+    page: int = 1,
+    page_size: int = 10,
+    sort: str = "created_desc",
+    db: Session = Depends(get_db),
+) -> NoteSearchResult:
+    page = max(page, 1)
+    page_size = max(page_size, 1)
+
+    filters = []
+    if q:
+        pattern = f"%{q.lower()}%"
+        filters.append(
+            or_(func.lower(Note.title).like(pattern), func.lower(Note.content).like(pattern))
         )
-    return [NoteRead.model_validate(row) for row in rows]
+
+    count_query = select(func.count()).select_from(Note)
+    items_query = select(Note)
+    for condition in filters:
+        count_query = count_query.where(condition)
+        items_query = items_query.where(condition)
+
+    total = db.execute(count_query).scalar_one()
+
+    if sort == "title_asc":
+        items_query = items_query.order_by(Note.title.asc())
+    else:
+        # created_desc: Note has no created_at column, so id (autoincrement)
+        # is used as a proxy for insertion order.
+        items_query = items_query.order_by(Note.id.desc())
+
+    items_query = items_query.limit(page_size).offset((page - 1) * page_size)
+    rows = db.execute(items_query).scalars().all()
+
+    return NoteSearchResult(
+        items=[NoteRead.model_validate(row) for row in rows],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/{note_id}", response_model=NoteRead)

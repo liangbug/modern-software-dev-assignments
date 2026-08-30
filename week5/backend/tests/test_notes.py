@@ -12,11 +12,14 @@ def test_create_and_list_notes(client):
 
     r = client.get("/notes/search/")
     assert r.status_code == 200
+    data = r.json()
+    assert set(data.keys()) == {"items", "total", "page", "page_size"}
 
     r = client.get("/notes/search/", params={"q": "Hello"})
     assert r.status_code == 200
-    items = r.json()
-    assert len(items) >= 1
+    data = r.json()
+    assert data["total"] >= 1
+    assert len(data["items"]) >= 1
 
 
 def test_update_note(client):
