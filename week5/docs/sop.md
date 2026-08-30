@@ -491,8 +491,8 @@ git worktree remove ../week5-task4
 
 ## 收尾檢查表
 
-- [ ] 至少完成2個 `docs/TASKS.md` 任務，各自標註難度
-- [ ] Warp Drive 至少1個 saved prompt/rule/MCP，share link寫進writeup
-- [ ] 至少一次真正同時在不同tab跑agent，有截圖佐證
-- [ ] `week5/writeup.md` 五個小節都填
-- [ ] `make test`、`make lint` 全過
+- [V] 至少完成2個 `docs/TASKS.md` 任務，各自標註難度
+- [V] Warp Drive 至少1個 saved prompt/rule/MCP，share link寫進writeup
+- [V] 至少一次真正同時在不同tab跑agent，有截圖佐證
+- [V] `week5/writeup.md` 五個小節都填
+- [V] `make test`、`make lint` 全過
