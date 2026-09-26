@@ -3,8 +3,9 @@ from sqlalchemy import asc, desc, func, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Note
+from ..models import Note, Tag
 from ..schemas import CountRead, NoteCreate, NotePatch, NoteRead
+from .tags import get_or_create_tag
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -46,6 +47,7 @@ def count_notes(db: Session = Depends(get_db), q: str | None = None) -> CountRea
 @router.post("/", response_model=NoteRead, status_code=201)
 def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
     note = Note(title=payload.title, content=payload.content)
+    note.tags = [get_or_create_tag(db, name) for name in dict.fromkeys(payload.tag_names)]
     db.add(note)
     db.flush()
     db.refresh(note)
@@ -81,3 +83,31 @@ def delete_note(note_id: int, db: Session = Depends(get_db)) -> None:
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     db.delete(note)
+
+
+@router.post("/{note_id}/tags/{tag_name}", response_model=NoteRead)
+def add_tag_to_note(note_id: int, tag_name: str, db: Session = Depends(get_db)) -> NoteRead:
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    tag = get_or_create_tag(db, tag_name)
+    if tag not in note.tags:
+        note.tags.append(tag)
+    db.add(note)
+    db.flush()
+    db.refresh(note)
+    return NoteRead.model_validate(note)
+
+
+@router.delete("/{note_id}/tags/{tag_id}", response_model=NoteRead)
+def remove_tag_from_note(note_id: int, tag_id: int, db: Session = Depends(get_db)) -> NoteRead:
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    tag = db.get(Tag, tag_id)
+    if tag and tag in note.tags:
+        note.tags.remove(tag)
+    db.add(note)
+    db.flush()
+    db.refresh(note)
+    return NoteRead.model_validate(note)
