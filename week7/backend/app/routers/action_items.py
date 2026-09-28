@@ -1,37 +1,48 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import asc, desc, select
+from sqlalchemy import asc, desc, func, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import ActionItem
-from ..schemas import ActionItemCreate, ActionItemPatch, ActionItemRead
+from ..schemas import ActionItemCreate, ActionItemPatch, ActionItemRead, CountRead
 
 router = APIRouter(prefix="/action-items", tags=["action_items"])
 
+_SORTABLE_FIELDS = ("description", "completed", "created_at", "updated_at", "id")
 
-@router.get("/", response_model=list[ActionItemRead])
-def list_items(
-    db: Session = Depends(get_db),
-    completed: Optional[bool] = None,
-    skip: int = 0,
-    limit: int = Query(50, le=200),
-    sort: str = Query("-created_at"),
-) -> list[ActionItemRead]:
-    stmt = select(ActionItem)
+
+def _apply_filter_and_sort(stmt, completed: bool | None, sort: str):
     if completed is not None:
         stmt = stmt.where(ActionItem.completed.is_(completed))
 
     sort_field = sort.lstrip("-")
     order_fn = desc if sort.startswith("-") else asc
-    if hasattr(ActionItem, sort_field):
+    if sort_field in _SORTABLE_FIELDS:
         stmt = stmt.order_by(order_fn(getattr(ActionItem, sort_field)))
     else:
         stmt = stmt.order_by(desc(ActionItem.created_at))
+    return stmt
 
+
+@router.get("/", response_model=list[ActionItemRead])
+def list_items(
+    db: Session = Depends(get_db),
+    completed: bool | None = None,
+    skip: int = 0,
+    limit: int = Query(50, le=200),
+    sort: str = Query("-created_at"),
+) -> list[ActionItemRead]:
+    stmt = _apply_filter_and_sort(select(ActionItem), completed, sort)
     rows = db.execute(stmt.offset(skip).limit(limit)).scalars().all()
     return [ActionItemRead.model_validate(row) for row in rows]
+
+
+@router.get("/count", response_model=CountRead)
+def count_items(db: Session = Depends(get_db), completed: bool | None = None) -> CountRead:
+    stmt = select(func.count()).select_from(ActionItem)
+    if completed is not None:
+        stmt = stmt.where(ActionItem.completed.is_(completed))
+    return CountRead(count=db.execute(stmt).scalar_one())
 
 
 @router.post("/", response_model=ActionItemRead, status_code=201)
@@ -56,7 +67,9 @@ def complete_item(item_id: int, db: Session = Depends(get_db)) -> ActionItemRead
 
 
 @router.patch("/{item_id}", response_model=ActionItemRead)
-def patch_item(item_id: int, payload: ActionItemPatch, db: Session = Depends(get_db)) -> ActionItemRead:
+def patch_item(
+    item_id: int, payload: ActionItemPatch, db: Session = Depends(get_db)
+) -> ActionItemRead:
     item = db.get(ActionItem, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Action item not found")
@@ -70,3 +83,9 @@ def patch_item(item_id: int, payload: ActionItemPatch, db: Session = Depends(get
     return ActionItemRead.model_validate(item)
 
 
+@router.delete("/{item_id}", status_code=204)
+def delete_item(item_id: int, db: Session = Depends(get_db)) -> None:
+    item = db.get(ActionItem, item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Action item not found")
+    db.delete(item)
