@@ -27,7 +27,19 @@ class TagRead(BaseModel):
 class NoteCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     content: str = Field(..., min_length=1)
+
     tag_names: list[str] = Field(default_factory=list)
+
+    @field_validator("tag_names")
+    @classmethod
+    def validate_tag_names(cls, value: list[str]) -> list[str]:
+        result = []
+        for name in value:
+            stripped = name.strip()
+            if stripped and len(stripped) <= 50:
+                result.append(stripped)
+        return result
+
 
     @field_validator("title", "content")
     @classmethod
