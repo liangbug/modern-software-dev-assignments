@@ -85,8 +85,16 @@ def delete_note(note_id: int, db: Session = Depends(get_db)) -> None:
     db.delete(note)
 
 
+
 @router.post("/{note_id}/tags/{tag_name}", response_model=NoteRead)
-def add_tag_to_note(note_id: int, tag_name: str, db: Session = Depends(get_db)) -> NoteRead:
+def add_tag_to_note(
+    note_id: int,
+    tag_name: str = Path(..., min_length=1, max_length=50),
+    db: Session = Depends(get_db)
+) -> NoteRead:
+    tag_name = tag_name.strip()
+    if not tag_name:
+        raise HTTPException(status_code=400, detail="Tag name must not be blank")
     note = db.get(Note, note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
@@ -97,6 +105,7 @@ def add_tag_to_note(note_id: int, tag_name: str, db: Session = Depends(get_db)) 
     db.flush()
     db.refresh(note)
     return NoteRead.model_validate(note)
+
 
 
 @router.delete("/{note_id}/tags/{tag_id}", response_model=NoteRead)
