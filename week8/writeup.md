@@ -50,16 +50,16 @@ Folder name: project2
 AI app generation platform: None
 Tech Stack: Flask
 Persistence: sqlite
-Frameworks/Libraries Used: TODO
+Frameworks/Libraries Used: Flask 3.0.3, Python 標準庫 sqlite3（無額外 ORM）, pytest 8.3.3（測試用）, vanilla JS + Jinja2 template（前端）
 (Optional but recommended) Screenshots of core flows: TODO
 
 REFLECTIONS:
 ===============
-a. Issues encountered per stack and how you resolved them: TODO
+a. Issues encountered per stack and how you resolved them: Flask app 用 `Flask(__name__)` 建立時，因為 `app/__init__.py` 屬於套件結構，預設的 template/static 資料夾會被解析成相對於 `app/` 目錄（即 `app/templates`），而不是專案根目錄的 `templates/`，導致首頁回傳 500（`TemplateNotFound`）。解法是在 `create_app()` 明確傳入絕對路徑的 `template_folder`、`static_folder`，指向專案根目錄下的 `templates/`、`static/`。另外測試中 `from app import create_app` 需要專案根目錄在 `sys.path` 上，透過新增 `pytest.ini` 設定 `pythonpath = .` 解決，避免測試執行位置依賴。
 
-b. Prompting (e.g. what required additional guidance; what worked poorly/wel): TODO
+b. Prompting (e.g. what required additional guidance; what worked poorly/wel): 本版無使用 AI 生成平台，純手刻（符合 Flask 選擇輕量、無額外框架 overhead 的考量），因此無 prompting 紀錄；開發流程是直接依照 project1 的資料模型（id/title/completed/created_at/updated_at）與 REST 慣例（GET/POST /api/todos、PUT/DELETE /api/todos/:id）實作，保持 3 個版本的 API 語意一致，方便比較。
 
-c. Approximate time-to-first-run and time-to-feature metrics: TODO
+c. Approximate time-to-first-run and time-to-feature metrics: 搭建 Flask app 骨架（blueprint + sqlite3 helper）約 20 分鐘可跑起第一版空畫面；加上完整 CRUD API 與前端 vanilla JS 串接約再 25 分鐘；補 7 條 pytest 測試並排除上述 TemplateNotFound 問題約 15 分鐘。整體約 1 小時完成含測試的完整版本。
 ```
 
 ## Version #3 Description
