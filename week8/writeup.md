@@ -70,14 +70,15 @@ Folder name: project3
 AI app generation platform: None
 Tech Stack: Vue.js + python FastAPI
 Persistence: sqlite
-Frameworks/Libraries Used: TODO
+Frameworks/Libraries Used: FastAPI 0.115.0, SQLAlchemy 2.0.35, Pydantic 2.9.2, uvicorn 0.30.6, pytest 8.3.3 + httpx（測試用）, Vue 3.4（`<script setup>`）, Vite 5
+
 (Optional but recommended) Screenshots of core flows: TODO
 
 REFLECTIONS:
 ===============
-a. Issues encountered per stack and how you resolved them: TODO
+a. Issues encountered per stack and how you resolved them: Backend/frontend 是兩個獨立 process（FastAPI :8000、Vite dev server :5173），預設會觸發瀏覽器 CORS 限制，因此在 `app/main.py` 加上 `CORSMiddleware` 明確允許 `http://localhost:5173`。SQLAlchemy 2.0 的 `datetime.utcnow()` 預設值寫法會跳出棄用警告（`DeprecationWarning: datetime.datetime.utcnow() is deprecated`），改用 `datetime.now(UTC)` 包一層 helper function 解決。測試部分沿用 week2/4-7 starter app 的 `conftest.py` dependency override 慣例：用 `StaticPool` + in-memory sqlite 建立獨立 `TestingSessionLocal`，覆寫 `get_db` dependency，確保測試不會動到 `backend/data/todos.db`。
 
-b. Prompting (e.g. what required additional guidance; what worked poorly/wel): TODO
+b. Prompting (e.g. what required additional guidance; what worked poorly/wel): 本版無使用 AI 生成平台，純手刻；為了跟 project1、project2 的資料模型與 API 路徑（/api/todos CRUD）保持一致，直接沿用相同欄位（id/title/completed/created_at/updated_at）與 REST 慣例，方便三個版本橫向比較同一組前端操作流程的實作差異。
 
-c. Approximate time-to-first-run and time-to-feature metrics: TODO
+c. Approximate time-to-first-run and time-to-feature metrics: Backend（FastAPI + SQLAlchemy model/schema/router）骨架約 25 分鐘可跑起 CRUD API；Frontend（Vue 3 + Vite，App/TodoList/TodoItem 三層元件拆分）串接 API 約再 20 分鐘；補 7 條 pytest 測試（含 in-memory DB fixture）約 15 分鐘，另花約 10 分鐘排除 CORS 與 datetime 棄用警告。整體約 1.5 小時完成含測試的完整版本（比 Flask 版久，主要是前後端分離多了一層 CORS 設定與元件拆分的時間）。
 ```
