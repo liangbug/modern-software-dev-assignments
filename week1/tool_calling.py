@@ -4,12 +4,12 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, Callable
 
 from dotenv import load_dotenv
-from ollama import chat
+from gemini_client import chat
 
 load_dotenv()
 
 NUM_RUNS_TIMES = 3
-
+MODEL_NAME = os.environ["GEMINI_MODEL"]
 
 # ==========================
 # Tool implementation (the "executor")
@@ -70,7 +70,25 @@ TOOL_REGISTRY: Dict[str, Callable[..., str]] = {
 # ==========================
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """
+You are a tool-calling agent. You have exactly one tool available:
+
+Tool name: output_every_func_return_type
+Description: Returns a newline-delimited list of "name: return_type" for each top-level function defined in a Python file.
+Arguments:
+  - file_path (string): Path to the Python file to analyze. Use an empty string "" to mean "the default file".
+
+When asked to call the tool, respond with ONLY a single JSON object (no markdown code fences, no explanation, no extra text before or after) in exactly this shape:
+
+{
+    "tool": "output_every_func_return_type",
+    "args": {
+        "file_path": ""
+    }
+}
+
+Do not include any other keys, comments, or text. Output valid JSON only.
+"""
 
 
 def resolve_path(p: str) -> str:
@@ -101,7 +119,7 @@ def extract_tool_call(text: str) -> Dict[str, Any]:
 
 def run_model_for_tool_call(system_prompt: str) -> Dict[str, Any]:
     response = chat(
-        model="llama3.1:8b",
+        model=MODEL_NAME,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": "Call the tool now."},

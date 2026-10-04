@@ -5,33 +5,16 @@ You will practice multiple prompting techniques by crafting prompts to complete 
 ## Installation
 Make sure you have first done the installation described in the top-level `README.md`. 
 
-## Ollama installation
-We will be using a tool to run different state-of-the-art LLMs locally on your machine called [Ollama](https://ollama.com/). Use one of the following methods:
+## Gemini API setup
+These scripts call Google's Gemini API via the `google-genai` SDK instead of running a model locally.
 
-- macOS (Homebrew):
-  ```bash
-  brew install --cask ollama 
-  ollama serve
-  ```
+1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
+2. Add it to a `.env` file at the project root:
+   ```bash
+   GEMINI_API_KEY=your-key-here
+   ```
 
-- Linux (recommended):
-  ```bash
-  curl -fsSL https://ollama.com/install.sh | sh
-  ```
-
-- Windows:
-  Download and run the installer from [ollama.com/download](https://ollama.com/download).
-
-Verify installation:
-```bash
-ollama -v
-```
-
-Before running the test scripts, make sure you have the following models pulled. You only need to do this once (unless you remove the models later):
-```bash
-ollama run mistral-nemo:12b
-ollama run llama3.1:8b
-```
+The shared `week1/gemini_client.py` helper exposes a `chat(model, messages, options)` function that mirrors the old `ollama.chat()` interface, so the rest of each script's logic is unchanged.
 
 ## Techniques and source files
 - K-shot prompting — `week1/k_shot_prompting.py`

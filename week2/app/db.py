@@ -75,6 +75,16 @@ def get_note(note_id: int) -> Optional[sqlite3.Row]:
         return row
 
 
+def get_action_item(action_item_id: int) -> Optional[sqlite3.Row]:
+    with get_connection() as connection:
+        cursor = connection.cursor()
+        cursor.execute(
+            "SELECT id, note_id, text, done, created_at FROM action_items WHERE id = ?",
+            (action_item_id,),
+        )
+        return cursor.fetchone()
+
+
 def insert_action_items(items: list[str], note_id: Optional[int] = None) -> list[int]:
     with get_connection() as connection:
         cursor = connection.cursor()
@@ -112,5 +122,3 @@ def mark_action_item_done(action_item_id: int, done: bool) -> None:
             (1 if done else 0, action_item_id),
         )
         connection.commit()
-
-

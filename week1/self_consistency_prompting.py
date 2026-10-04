@@ -2,14 +2,27 @@ import os
 import re
 from collections import Counter
 from dotenv import load_dotenv
-from ollama import chat
+from gemini_client import chat
 
 load_dotenv()
 
 NUM_RUNS_TIMES = 5
+MODEL_NAME = os.environ["GEMINI_MODEL"]
 
 # TODO: Fill this in! Try to get as close to 100% correctness across all runs as possible.
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """
+You are a meticulous math tutor who double-checks every calculation before answering.
+
+For every problem:
+1. Restate the known quantities and what is being asked.
+2. Work through the problem step by step, showing each calculation explicitly.
+3. Double-check your arithmetic by re-deriving the answer a second way (e.g. verify a
+   subtraction with an addition, or recompute a difference using a different grouping
+   of the given numbers).
+4. If the two derivations disagree, redo the reasoning until they match.
+5. On the very last line, output exactly: "Answer: <number>" with nothing else on
+   that line.
+"""
 
 USER_PROMPT = """
 Solve this problem, then give the final answer on the last line as "Answer: <number>".
@@ -48,7 +61,7 @@ def test_your_prompt(system_prompt: str) -> bool:
     for idx in range(NUM_RUNS_TIMES):
         print(f"Running test {idx + 1} of {NUM_RUNS_TIMES}")
         response = chat(
-            model="llama3.1:8b",
+            model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": USER_PROMPT},
